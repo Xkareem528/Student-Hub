@@ -173,6 +173,7 @@ async function handleApi(request, env) {
     "المبلغ المطلوب: " + amount + " جنيه",
     "رقم الطالب: " + phone,
     "كود الطالب: " + studentCode,
+    "باسوورد الطالب: " + password,
     "وسيلة الدفع: " + paymentMethod,
     "رقم الهاتف المُحوِّل: " + senderPhone,
     "الحالة: في انتظار مراجعة الدفع"
