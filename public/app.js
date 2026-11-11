@@ -1,22 +1,89 @@
 const form = document.querySelector("#solver-form");
 const result = document.querySelector("#result");
+const subjectFieldset = document.querySelector("#subject-fieldset");
+const subjectOptions = document.querySelector("#subject-options");
+const studentDetails = document.querySelector("#student-details");
 
-// تعيين السنة الحالية في التذييل تلقائياً
+const subjectsBySelection = {
+  "حكومي|أولى بكالوريا": [
+    { value: "JavaScript (QUREO)", label: "جافا سكريبت (QUREO)", icon: "💻" }
+  ],
+  "حكومي|تانية بكالوريا": [
+    { value: "Python", label: "بايثون", icon: "🐍" },
+    { value: "JavaScript", label: "جافا سكريبت", icon: "💻" },
+    { value: "ثقافة مالية", label: "ثقافة مالية", icon: "💰" }
+  ],
+  "لغات|أولى بكالوريا": [
+    { value: "English", label: "إنجليزي", icon: "🇬🇧" }
+  ],
+  "لغات|تانية بكالوريا": [
+    { value: "English", label: "إنجليزي", icon: "🇬🇧" }
+  ]
+};
+
 const yearElement = document.querySelector("#year");
-if (yearElement) {
-  yearElement.textContent = new Date().getFullYear();
+if (yearElement) yearElement.textContent = new Date().getFullYear();
+
+function updateSelectedCards() {
+  document.querySelectorAll(".option-card input").forEach((input) => {
+    input.closest(".option-card")?.classList.toggle("selected", input.checked);
+  });
 }
 
-// إدارة تفاعل خيارات الاختيار (Radio Cards)
-document.querySelectorAll(".option-card input").forEach((input) => {
-  input.addEventListener("change", () => {
-    document.querySelectorAll('input[name="' + input.name + '"]').forEach((item) => {
-      item.closest(".option-card").classList.toggle("selected", item.checked);
+function updateFlow() {
+  const type = form.querySelector('input[name="type"]:checked')?.value;
+  const grade = form.querySelector('input[name="grade"]:checked')?.value;
+  const subjects = subjectsBySelection[type + "|" + grade] || [];
+
+  subjectOptions.replaceChildren();
+  studentDetails.hidden = true;
+  subjectFieldset.hidden = false;
+
+  subjects.forEach((subject) => {
+    const label = document.createElement("label");
+    label.className = "option-card";
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "subject";
+    radio.value = subject.value;
+
+    const icon = document.createElement("span");
+    icon.className = "option-icon";
+    icon.textContent = subject.icon;
+
+    const copy = document.createElement("span");
+    copy.className = "option-copy";
+    const title = document.createElement("b");
+    title.textContent = subject.label;
+    const hint = document.createElement("small");
+    hint.textContent = "المادة المختارة";
+    copy.append(title, hint);
+
+    const dot = document.createElement("span");
+    dot.className = "radio-dot";
+    label.append(radio, icon, copy, dot);
+    radio.addEventListener("change", () => {
+      updateSelectedCards();
+      studentDetails.hidden = false;
+      result.textContent = "";
+      result.classList.remove("error");
+      studentDetails.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
+    subjectOptions.appendChild(label);
+  });
+
+  updateSelectedCards();
+}
+
+form.querySelectorAll('input[name="type"], input[name="grade"]').forEach((input) => {
+  input.addEventListener("change", () => {
+    updateSelectedCards();
+    updateFlow();
   });
 });
 
-// إرسال الطلب مع إظهار النتيجة الحقيقية من الخادم
+updateFlow();
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   result.textContent = "";
@@ -26,17 +93,22 @@ form.addEventListener("submit", async (event) => {
   const buttonSpan = button.querySelector("span");
   const type = form.querySelector('input[name="type"]:checked')?.value;
   const grade = form.querySelector('input[name="grade"]:checked')?.value;
+  const subject = form.querySelector('input[name="subject"]:checked')?.value;
   const phone = document.querySelector("#phone").value.trim();
   const studentCode = document.querySelector("#student-code").value.trim();
   const note = document.querySelector("#special-word").value.trim();
   const consent = document.querySelector("#demo-consent").checked;
 
+  if (!subject) {
+    result.textContent = "اختر المادة الدراسية أولاً.";
+    result.classList.add("error");
+    return;
+  }
   if (!phone || !studentCode) {
     result.textContent = "أكمل رقم الهاتف وكود الطالب.";
     result.classList.add("error");
     return;
   }
-
   if (!consent) {
     result.textContent = "يجب الموافقة على إرسال البيانات أولاً.";
     result.classList.add("error");
@@ -50,9 +122,8 @@ form.addEventListener("submit", async (event) => {
     const response = await fetch("/api/submit", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ type, grade, phone, studentCode, note, consent })
+      body: JSON.stringify({ type, grade, subject, phone, studentCode, note, consent })
     });
-
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.ok) {
       throw new Error(data.message || "تعذر إرسال الطلب. حاول مرة أخرى.");
@@ -60,9 +131,8 @@ form.addEventListener("submit", async (event) => {
 
     result.textContent = data.message || "تم إرسال الطلب بنجاح.";
     form.reset();
-    document.querySelectorAll(".option-card input").forEach((input) => {
-      input.closest(".option-card").classList.toggle("selected", input.checked);
-    });
+    updateSelectedCards();
+    updateFlow();
   } catch (error) {
     result.textContent = error.message || "حدث خطأ في الاتصال. حاول مرة أخرى.";
     result.classList.add("error");
