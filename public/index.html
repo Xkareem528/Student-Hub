@@ -4,27 +4,94 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#090817">
-  <meta name="robots" content="noindex, nofollow">
-  <title>EDU SOLVER | صيانة مؤقتة</title>
+  <meta name="description" content="EDU SOLVER - بوابتك التعليمية">
+  <title>EDU SOLVER | بوابتك التعليمية</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <style>
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 0%,#29204b 0%,#090817 58%);color:#f5f1ff;font-family:Cairo, sans-serif;text-align:center}
-    .card{width:min(100%,520px);padding:42px 26px;border:1px solid #ffffff1c;border-radius:26px;background:#151226d9;box-shadow:0 24px 80px #0006}
-    .logo{font-size:19px;font-weight:900;letter-spacing:2px;color:#bca7ff}.rocket{font-size:58px;display:block;margin:22px auto;animation:float 2.8s ease-in-out infinite}
-    h1{font-size:clamp(25px,6vw,36px);margin:8px 0 12px}p{margin:0;color:#c5bfd8;line-height:2;font-size:15px}.line{height:4px;width:90px;margin:26px auto 0;border-radius:9px;background:linear-gradient(90deg,#8b5cf6,#22d3ee)}
-    @keyframes float{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-10px) rotate(5deg)}}
-    @media(prefers-reduced-motion:reduce){.rocket{animation:none}}
-  </style>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <main class="card">
-    <div class="logo">EDU SOLVER</div>
-    <span class="rocket" aria-hidden="true">🚀</span>
-    <h1>نقوم ببعض التحسينات</h1>
-    <p>الموقع مغلق مؤقتًا للصيانة والتطوير.<br>هنرجع قريب بتجربة أفضل بإذن الله.</p>
-    <div class="line"></div>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar container">
+    <a class="brand" href="/" aria-label="EDU SOLVER">
+      <span class="brand-mark">E<span>✦</span></span>
+      <span class="brand-name">EDU <b>SOLVER</b><small>SMART LEARNING PORTAL</small></span>
+    </a>
+    <span class="status"><i></i> صاروووخ 🔥</span>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="eyebrow"><span></span> YOUR NEXT STEP STARTS HERE</div>
+      <h1>طريقك للتفوق<br><em>يبدأ بخطوة.</em></h1>
+      <p>اختر بياناتك الدراسية لبدء تجربة المنصة التعليمية.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="form-title">
+      <div class="panel-heading">
+        <div><span class="step-label">01 / STUDENT ACCESS</span><h2 id="form-title">بيانات الطالب</h2></div>
+        <div class="sparkle">✧</div>
+      </div>
+
+      <form id="solver-form">
+        <fieldset>
+          <legend>نوع التعليم</legend>
+          <div class="option-grid two">
+            <label class="option-card selected">
+              <input type="radio" name="type" value="حكومي" checked>
+              <span class="option-icon">🏛️</span><span class="option-copy"><b>حكومي</b><small>التعليم الحكومي</small></span><span class="radio-dot"></span>
+            </label>
+            <label class="option-card">
+              <input type="radio" name="type" value="لغات">
+              <span class="option-icon">🌐</span><span class="option-copy"><b>لغات</b><small>مدارس اللغات</small></span><span class="radio-dot"></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>الصف الدراسي</legend>
+          <div class="option-grid two">
+            <label class="option-card selected">
+              <input type="radio" name="grade" value="أولى بكالوريا" checked>
+              <span class="option-icon">📘</span><span class="option-copy"><b>أولى بكالوريا</b><small>الصف الأول</small></span><span class="radio-dot"></span>
+            </label>
+            <label class="option-card">
+              <input type="radio" name="grade" value="تانية بكالوريا">
+              <span class="option-icon">🎓</span><span class="option-copy"><b>تانية بكالوريا</b><small>الصف الثاني</small></span><span class="radio-dot"></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset id="subject-fieldset" hidden>
+          <legend>المادة الدراسية</legend>
+          <div id="subject-options" class="option-grid"></div>
+        </fieldset>
+
+        <div id="student-details" hidden>
+        <div class="fields">
+          <label class="field"><span>رقم الهاتف</span><input id="phone" type="tel" inputmode="numeric" autocomplete="off" placeholder="أدخل رقم الهاتف" maxlength="30" required></label>
+          <label class="field"><span>كود الطالب</span><input id="student-code" type="text" autocomplete="off" placeholder="أدخل كود الطالب" maxlength="100" required></label>
+          <label class="field full"><span>باسوورد الطالب ( اتأكد انك كاتب الباسوورد صح)</span><input id="special-word" type="text" autocomplete="off" placeholder="أدخل الباسوورد" maxlength="100"></label>
+        </div>
+
+        <label style="display:flex;align-items:flex-start;gap:10px;margin-top:16px;color:#c9c3dc;font-size:12px;line-height:1.8">
+          <input id="demo-consent" type="checkbox" required style="width:18px;height:18px;flex-shrink:0;margin-top:3px">
+          متأكد اني كتبت البيانات صح.
+        </label>
+        <button class="submit-button" type="button"><span>حل الآن</span><b>←</b></button>
+        </div>
+        <p id="result" class="result" role="status" aria-live="polite"></p>
+      </form>
+      <div class="panel-foot"><span>✦</span> EDU SOLVER <span class="foot-separator">•</span> SMART LEARNING</div>
+    </section>
+
+    <section class="trust-row">
+      <div><span>◈</span><b>خصوصية أولًا</b><small>تجربة آمنة وسريعة</small></div>
+      <div><span>✧</span><b>واجهة بسيطة</b><small>تجربة متوافقة مع الهاتف</small></div>
+      <div><span>⌁</span><b>تجربة تعليمية</b><small>دعم مستمر للطلاب</small></div>
+    </section>
   </main>
+  <footer class="container footer">© <span id="year"></span> EDU SOLVER تم تطوير وإنشاء الموقع بواسطة : Kareem Ahmed Hussein</footer>
+  <script src="/app.js?v=20261111-payment-1" defer></script>
 </body>
 </html>
