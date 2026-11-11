@@ -139,7 +139,7 @@ async function handleApi(request, env) {
     }, 502);
   }
 
-  return json({ ok: true, message: "تم إرسال بياناتك إلى إدارة EDU SOLVER بنجاح." });
+  return json({ ok: true, message: "جاري الحل انتظر رسالة علي الواتساب بتاعك" });
 }
 
 export default {
