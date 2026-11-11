@@ -31,6 +31,7 @@ async function notifyTelegram(data, env) {
     "طلب جديد من EDU SOLVER",
     "النوع: " + data.type,
     "الصف: " + data.grade,
+    "المادة: " + data.subject,
     "رقم الهاتف: " + data.phone,
     "كود الطالب: " + data.studentCode,
     ...(data.note ? ["الملاحظة: " + data.note] : [])
@@ -86,11 +87,21 @@ async function handleApi(request, env) {
     return json({ ok: false, message: "بيانات الطلب غير صالحة." }, 400);
   }
 
-  const { type, grade, phone, studentCode, note = "", consent } = body || {};
+  const { type, grade, subject, phone, studentCode, note = "", consent } = body || {};
   const allowedTypes = ["حكومي", "لغات"];
   const allowedGrades = ["أولى بكالوريا", "تانية بكالوريا"];
+  const allowedSubjects = {
+    "حكومي|أولى بكالوريا": ["JavaScript (QUREO)"],
+    "حكومي|تانية بكالوريا": ["Python", "JavaScript", "ثقافة مالية"],
+    "لغات|أولى بكالوريا": ["English"],
+    "لغات|تانية بكالوريا": ["English"]
+  };
 
-  if (!allowedTypes.includes(type) || !allowedGrades.includes(grade)) {
+  if (
+    !allowedTypes.includes(type) ||
+    !allowedGrades.includes(grade) ||
+    !allowedSubjects[type + "|" + grade]?.includes(subject)
+  ) {
     return json({ ok: false, message: "اختيارات غير صحيحة." }, 400);
   }
 
@@ -113,6 +124,7 @@ async function handleApi(request, env) {
     await notifyTelegram({
       type,
       grade,
+      subject,
       phone: phone.trim(),
       studentCode: studentCode.trim(),
       note: note.trim()
