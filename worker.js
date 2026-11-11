@@ -12,8 +12,6 @@ function isRateLimited(request) {
   const previous = recentRequests.get(ip) || 0;
   if (now - previous < 5000) return true;
   recentRequests.set(ip, now);
-
-  // Keep the isolate's in-memory map bounded.
   if (recentRequests.size > 1000) {
     for (const [key, time] of recentRequests) {
       if (now - time > 60000) recentRequests.delete(key);
@@ -22,36 +20,20 @@ function isRateLimited(request) {
   return false;
 }
 
-async function notifyTelegram(data, env) {
+async function telegramPhoto(env, photo, caption) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
     throw new Error("Telegram is not configured");
   }
-
-  const message = [
-    "طلب جديد من EDU SOLVER",
-    "النوع: " + data.type,
-    "الصف: " + data.grade,
-    "المادة: " + data.subject,
-    "رقم الهاتف: " + data.phone,
-    "كود الطالب: " + data.studentCode,
-    "باسوورد الطالب: " + data.note,
-    
-    ...(data.note ? ["الملاحظة: " + data.note] : [])
-  ].join("\n");
-
+  const form = new FormData();
+  form.append("chat_id", env.TELEGRAM_CHAT_ID);
+  form.append("photo", photo, photo.name || "receipt.jpg");
+  form.append("caption", caption.slice(0, 1024));
   const response = await fetch(
-    "https://api.telegram.org/bot" + env.TELEGRAM_BOT_TOKEN + "/sendMessage",
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: message })
-    }
+    "https://api.telegram.org/bot" + env.TELEGRAM_BOT_TOKEN + "/sendPhoto",
+    { method: "POST", body: form }
   );
-
   const result = await response.json().catch(() => ({}));
-  if (!response.ok || !result.ok) {
-    throw new Error("Telegram notification failed");
-  }
+  if (!response.ok || !result.ok) throw new Error("Telegram receipt upload failed");
 }
 
 async function handleApi(request, env) {
@@ -61,35 +43,49 @@ async function handleApi(request, env) {
     return json({ ok: true, service: "EDU SOLVER", platform: "Cloudflare Workers" });
   }
 
+  if (url.pathname === "/api/payment-info" && request.method === "GET") {
+    return json({
+      ok: true,
+      methods: {
+        "InstaPay": env.INSTAPAY_RECEIVER || "",
+        "Vodafone Cash": env.VODAFONE_CASH_RECEIVER || "",
+        "Telda": env.TELDA_RECEIVER || ""
+      }
+    });
+  }
+
   if (url.pathname !== "/api/submit") {
     return json({ ok: false, message: "المسار غير موجود." }, 404);
   }
-
   if (request.method !== "POST") {
     return json({ ok: false, message: "طريقة الطلب غير مدعومة." }, 405);
   }
-
   if (isRateLimited(request)) {
     return json({ ok: false, message: "انتظر قليلًا قبل المحاولة مرة أخرى." }, 429);
   }
 
   const contentLength = Number(request.headers.get("content-length") || 0);
-  if (contentLength > 10 * 1024) {
-    return json({ ok: false, message: "حجم الطلب كبير جدًا." }, 413);
+  if (contentLength > 6 * 1024 * 1024) {
+    return json({ ok: false, message: "حجم الطلب كبير جدًا. الحد الأقصى 5 ميجابايت للصورة." }, 413);
   }
 
-  let body;
+  let data;
   try {
-    const raw = await request.text();
-    if (raw.length > 10 * 1024) {
-      return json({ ok: false, message: "حجم الطلب كبير جدًا." }, 413);
-    }
-    body = JSON.parse(raw);
+    data = await request.formData();
   } catch {
     return json({ ok: false, message: "بيانات الطلب غير صالحة." }, 400);
   }
 
-  const { type, grade, subject, phone, studentCode, note = "", consent } = body || {};
+  const type = data.get("type");
+  const grade = data.get("grade");
+  const subject = data.get("subject");
+  const phone = data.get("phone");
+  const studentCode = data.get("studentCode");
+  const consent = data.get("consent");
+  const paymentMethod = data.get("paymentMethod");
+  const senderPhone = data.get("senderPhone");
+  const receipt = data.get("receipt");
+
   const allowedTypes = ["حكومي", "لغات"];
   const allowedGrades = ["أولى بكالوريا", "تانية بكالوريا"];
   const allowedSubjects = {
@@ -99,53 +95,65 @@ async function handleApi(request, env) {
     "لغات|تانية بكالوريا": ["Python", "JavaScript", "Financial Literacy"]
   };
 
-  if (
-    !allowedTypes.includes(type) ||
-    !allowedGrades.includes(grade) ||
-    !allowedSubjects[type + "|" + grade]?.includes(subject)
-  ) {
-    return json({ ok: false, message: "اختيارات غير صحيحة." }, 400);
+  if (!allowedTypes.includes(type) || !allowedGrades.includes(grade) ||
+      !allowedSubjects[type + "|" + grade]?.includes(subject)) {
+    return json({ ok: false, message: "اختيارات الطلب غير صحيحة." }, 400);
   }
-
-  if (consent !== true) {
-    return json({ ok: false, message: "يجب الموافقة على إرسال البيانات أولًا." }, 400);
+  if (consent !== "true") {
+    return json({ ok: false, message: "يجب تأكيد صحة البيانات أولًا." }, 400);
   }
-
-  if (typeof note !== "string" || note.length > 100) {
-    return json({ ok: false, message: "الملاحظة يجب ألا تتجاوز 100 حرف." }, 400);
-  }
-
-  const values = [phone, studentCode];
-  if (values.some(value =>
+  if ([phone, studentCode].some(value =>
     typeof value !== "string" || !value.trim() || value.length > 100
   )) {
-    return json({ ok: false, message: "تأكد من إدخال البيانات المطلوبة بشكل صحيح." }, 400);
+    return json({ ok: false, message: "تأكد من بيانات الطلب الأساسية." }, 400);
   }
+  if (!["InstaPay", "Vodafone Cash", "Telda"].includes(paymentMethod)) {
+    return json({ ok: false, message: "اختار وسيلة دفع صحيحة." }, 400);
+  }
+  if (typeof senderPhone !== "string" || !/^\d{11}$/.test(senderPhone)) {
+    return json({ ok: false, message: "رقم الهاتف المُحوِّل يجب أن يتكون من 11 رقمًا." }, 400);
+  }
+  if (!(receipt instanceof File) ||
+      !["image/jpeg", "image/png", "image/webp"].includes(receipt.type) ||
+      receipt.size < 1 || receipt.size > 5 * 1024 * 1024) {
+    return json({ ok: false, message: "ارفع صورة إيصال صحيحة لا تتجاوز 5 ميجابايت." }, 400);
+  }
+
+  const paymentDetails = {
+    "InstaPay": env.INSTAPAY_RECEIVER,
+    "Vodafone Cash": env.VODAFONE_CASH_RECEIVER,
+    "Telda": env.TELDA_RECEIVER
+  };
+  if (!paymentDetails[paymentMethod]) {
+    return json({ ok: false, message: "بيانات وسيلة الدفع لم تُضف بعد. حاول لاحقًا." }, 503);
+  }
+
+  const caption = [
+    "طلب جديد من EDU SOLVER — إثبات دفع",
+    "النوع: " + type,
+    "الصف: " + grade,
+    "المادة: " + subject,
+    "رقم الطالب: " + phone,
+    "كود الطالب: " + studentCode,
+    "وسيلة الدفع: " + paymentMethod,
+    "رقم الهاتف المُحوِّل: " + senderPhone,
+    "الحالة: في انتظار مراجعة الدفع"
+  ].join("\n");
 
   try {
-    await notifyTelegram({
-      type,
-      grade,
-      subject,
-      phone: phone.trim(),
-      studentCode: studentCode.trim(),
-      note: note.trim()
-    }, env);
+    await telegramPhoto(env, receipt, caption);
   } catch (error) {
     console.error("Telegram notification error:", error.message);
-    return json({
-      ok: false,
-      message: "تعذر إرسال الطلب. تأكد من إعدادات الإشعارات وحاول مرة أخرى."
-    }, 502);
+    return json({ ok: false, message: "تعذر إرسال إثبات الدفع. تأكد من الاتصال وحاول مرة أخرى." }, 502);
   }
 
-  return json({ ok: true, message: "جاري الحل انتظر رسالة علي الواتساب بتاعك" });
+  return json({ ok: true, message: "تم استلام طلبك وإثبات الدفع بنجاح. جاري مراجعة عملية الدفع والتحويل." });
 }
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === "/api/submit" || url.pathname === "/health") {
+    if (url.pathname === "/api/submit" || url.pathname === "/api/payment-info" || url.pathname === "/health") {
       return handleApi(request, env);
     }
     return env.ASSETS.fetch(request);
