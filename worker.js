@@ -93,8 +93,8 @@ async function handleApi(request, env) {
   const allowedSubjects = {
     "حكومي|أولى بكالوريا": ["JavaScript (QUREO)"],
     "حكومي|تانية بكالوريا": ["Python", "JavaScript", "ثقافة مالية"],
-    "لغات|أولى بكالوريا": ["English"],
-    "لغات|تانية بكالوريا": ["English"]
+    "لغات|أولى بكالوريا": ["JavaScript (QUREO)"],
+    "لغات|تانية بكالوريا": ["Python", "JavaScript", "Financial Literacy"]
   };
 
   if (
