@@ -308,6 +308,7 @@ async function submitPaidOrder() {
     payload.append("bundle", String(Boolean(pendingOrder.bundle)));
     payload.append("phone", pendingOrder.phone);
     payload.append("studentCode", pendingOrder.studentCode);
+    payload.append("password", pendingOrder.password);
     payload.append("consent", String(pendingOrder.consent));
     payload.append("paymentMethod", method);
     payload.append("senderPhone", senderPhone);
