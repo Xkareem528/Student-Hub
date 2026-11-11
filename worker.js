@@ -69,7 +69,7 @@ async function handleApi(request, env) {
       methods: {
         "InstaPay": env.INSTAPAY_RECEIVER || "01004876339",
         "Vodafone Cash": env.VODAFONE_CASH_RECEIVER || "01063942772",
-        "Telda": env.TELDA_RECEIVER || "@kareemahme675859" || "@kareemahme675859"
+        "Telda": env.TELDA_RECEIVER || "@kareemahme675859"
       }
     });
   }
@@ -142,7 +142,7 @@ async function handleApi(request, env) {
   const paymentDetails = {
     "InstaPay": env.INSTAPAY_RECEIVER || "01004876339",
     "Vodafone Cash": env.VODAFONE_CASH_RECEIVER || "01063942772",
-    "Telda": env.TELDA_RECEIVER
+    "Telda": env.TELDA_RECEIVER || "@kareemahme675859"
   };
   if (!paymentDetails[paymentMethod]) {
     return json({ ok: false, message: "بيانات وسيلة الدفع لم تُضف بعد. حاول لاحقًا." }, 503);
