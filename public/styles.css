@@ -504,3 +504,116 @@ legend {
     font-size: 15px;
   }
 }
+
+
+/* Smooth, subtle motion */
+.status {
+  position: relative;
+  overflow: hidden;
+  animation: status-float 3.6s ease-in-out infinite, status-glow 3.6s ease-in-out infinite;
+}
+
+.status::after {
+  content: "";
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  right: -45%;
+  width: 28%;
+  transform: rotate(24deg);
+  background: linear-gradient(90deg, transparent, #ffffff30, transparent);
+  animation: status-shine 4.8s ease-in-out infinite;
+}
+
+.status i {
+  animation: status-dot 1.8s ease-in-out infinite;
+}
+
+.hero {
+  animation: rise-in .8s cubic-bezier(.2,.7,.2,1) both;
+}
+
+.panel {
+  animation: rise-in .85s .12s cubic-bezier(.2,.7,.2,1) both;
+}
+
+.trust-row {
+  animation: rise-in .85s .24s cubic-bezier(.2,.7,.2,1) both;
+}
+
+.sparkle {
+  transform-origin: center;
+  animation: sparkle-drift 4s ease-in-out infinite;
+}
+
+.option-card {
+  transition: border-color .25s ease, background .25s ease, transform .25s ease, box-shadow .25s ease;
+}
+
+.option-card.selected {
+  box-shadow: 0 0 22px #a78bfa12;
+}
+
+.field input {
+  transition: border-color .25s ease, box-shadow .25s ease, background .25s ease;
+}
+
+.submit-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.submit-button::after {
+  content: "";
+  position: absolute;
+  top: -70%;
+  bottom: -70%;
+  left: -35%;
+  width: 22%;
+  transform: rotate(22deg);
+  background: linear-gradient(90deg, transparent, #ffffff55, transparent);
+  transition: left .6s ease;
+}
+
+.submit-button:hover::after {
+  left: 115%;
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes status-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes status-glow {
+  0%, 100% { box-shadow: 0 0 0 rgba(255,184,108,0), inset 0 1px #ffffff08; }
+  50% { box-shadow: 0 0 18px rgba(255,184,108,.13), inset 0 1px #ffffff18; }
+}
+
+@keyframes status-shine {
+  0%, 55% { right: -45%; }
+  85%, 100% { right: 125%; }
+}
+
+@keyframes status-dot {
+  0%, 100% { opacity: .7; box-shadow: 0 0 5px #ffb86c; }
+  50% { opacity: 1; box-shadow: 0 0 13px 3px #ffb86c88; }
+}
+
+@keyframes sparkle-drift {
+  0%, 100% { transform: rotate(0) scale(1); opacity: .8; }
+  50% { transform: rotate(18deg) scale(1.12); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
