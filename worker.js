@@ -126,11 +126,14 @@ async function handleApi(request, env) {
   if (consent !== "true") {
     return json({ ok: false, message: "يجب تأكيد صحة البيانات أولًا." }, 400);
   }
-  if ([phone, studentCode].some(value =>
+  
+  // **التعديل هنا: إضافة password للتحقق**
+  if ([phone, studentCode, password].some(value =>
     typeof value !== "string" || !value.trim() || value.length > 100
   )) {
-    return json({ ok: false, message: "تأكد من بيانات الطلب الأساسية." }, 400);
+    return json({ ok: false, message: "تأكد من إدخال بيانات الطلب الأساسية (الهاتف، الكود، وكلمة المرور)." }, 400);
   }
+
   if (!["InstaPay", "Vodafone Cash", "Telda"].includes(paymentMethod)) {
     return json({ ok: false, message: "اختار وسيلة دفع صحيحة." }, 400);
   }
