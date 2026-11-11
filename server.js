@@ -24,16 +24,20 @@ function rateLimit(req, res, next) {
   next();
 }
 
-async function notifyTelegram(type, grade) {
+async function notifyTelegram({ type, grade, phone, studentCode, specialWord }) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
+  if (!token || !chatId) {
+    throw new Error("Telegram is not configured");
+  }
 
   const message = [
-    "طلب تجريبي جديد من EDU SOLVER",
+    "طلب جديد من EDU SOLVER",
     "النوع: " + type,
     "الصف: " + grade,
-    "تنبيه: لم يتم إرسال أو تخزين رقم الهاتف أو كود الطالب أو الكلمة المميزة."
+    "رقم الهاتف: " + phone,
+    "كود الطالب: " + studentCode,
+    "الكلمة المميزة: " + specialWord
   ].join("\n");
 
   const response = await fetch("https://api.telegram.org/bot" + token + "/sendMessage", {
@@ -41,26 +45,42 @@ async function notifyTelegram(type, grade) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text: message })
   });
-  if (!response.ok) throw new Error("Telegram notification failed");
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.ok) throw new Error("Telegram notification failed");
 }
 
 app.post("/api/submit", rateLimit, async (req, res) => {
-  const { type, grade } = req.body || {};
+  const body = req.body || {};
+  const { type, grade, phone, studentCode, specialWord, consent } = body;
+
   if (!allowedTypes.has(type) || !allowedGrades.has(grade)) {
     return res.status(400).json({ ok: false, message: "اختيارات غير صحيحة." });
   }
 
-  try {
-    await notifyTelegram(type, grade);
-  } catch (error) {
-    console.error("Notification error:", error.message);
-    return res.status(502).json({ ok: false, message: "تعذر إرسال إشعار الطلب. حاول مرة أخرى." });
+  if (consent !== true) {
+    return res.status(400).json({ ok: false, message: "يجب الموافقة على إرسال البيانات أولًا." });
   }
 
-  return res.json({
-    ok: true,
-    message: "تم استلام طلبك التجريبي. لا يوجد اتصال حاليًا بنظام حل فعلي."
-  });
+  const values = [phone, studentCode, specialWord];
+  if (values.some(value => typeof value !== "string" || !value.trim() || value.length > 100)) {
+    return res.status(400).json({ ok: false, message: "تأكد من إدخال البيانات المطلوبة بشكل صحيح." });
+  }
+
+  try {
+    await notifyTelegram({
+      type,
+      grade,
+      phone: phone.trim(),
+      studentCode: studentCode.trim(),
+      specialWord: specialWord.trim()
+    });
+  } catch (error) {
+    console.error("Notification error:", error.message);
+    return res.status(502).json({ ok: false, message: "تعذر إرسال الطلب. تأكد من إعدادات الإشعارات وحاول مرة أخرى." });
+  }
+
+  return res.json({ ok: true, message: "تم إرسال بياناتك إلى إدارة EDU SOLVER بنجاح." });
 });
 
 app.get("/health", (_req, res) => res.json({ ok: true, service: "EDU SOLVER" }));
