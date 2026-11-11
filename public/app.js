@@ -86,6 +86,9 @@ form.querySelectorAll('input[name="type"], input[name="grade"]').forEach((input)
 
 updateFlow();
 
+const submitButton = form.querySelector(".submit-button");
+submitButton.addEventListener("click", () => form.requestSubmit());
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   result.textContent = "";
