@@ -36,6 +36,26 @@ async function telegramPhoto(env, photo, caption) {
   if (!response.ok || !result.ok) throw new Error("Telegram receipt upload failed");
 }
 
+const ALLOWED_ORIGIN = "https://edusolver.pages.dev";
+
+function withCors(response, request) {
+  const headers = new Headers(response.headers);
+  headers.set("Vary", "Origin");
+
+  if (request.headers.get("Origin") === ALLOWED_ORIGIN) {
+    headers.set("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+    headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    headers.set("Access-Control-Allow-Headers", "Content-Type");
+    headers.set("Access-Control-Max-Age", "86400");
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
 async function handleApi(request, env) {
   const url = new URL(request.url);
 
@@ -153,7 +173,14 @@ async function handleApi(request, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === "/api/submit" || url.pathname === "/api/payment-info" || url.pathname === "/health") {
+    if (url.pathname === "/api/submit" || url.pathname === "/api/payment-info") {
+      if (request.method === "OPTIONS") {
+        return withCors(new Response(null, { status: 204 }), request);
+      }
+      const response = await handleApi(request, env);
+      return withCors(response, request);
+    }
+    if (url.pathname === "/health") {
       return handleApi(request, env);
     }
     return env.ASSETS.fetch(request);
