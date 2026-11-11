@@ -16,7 +16,7 @@ document.querySelectorAll(".option-card input").forEach((input) => {
   });
 });
 
-// التعامل مع إرسال النموذج
+// إرسال الطلب مع إظهار النتيجة الحقيقية من الخادم
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   result.textContent = "";
@@ -24,51 +24,47 @@ form.addEventListener("submit", async (event) => {
 
   const button = form.querySelector(".submit-button");
   const buttonSpan = button.querySelector("span");
-  
   const type = form.querySelector('input[name="type"]:checked')?.value;
   const grade = form.querySelector('input[name="grade"]:checked')?.value;
   const phone = document.querySelector("#phone").value.trim();
   const studentCode = document.querySelector("#student-code").value.trim();
-  const specialWord = document.querySelector("#special-word").value.trim();
+  const consent = document.querySelector("#demo-consent").checked;
 
-  // التحقق من إدخال الحقول المطلوبة مع رسالة التنبيه الجديدة
-  if (!phone || !studentCode || !specialWord) {
-    result.textContent = "اتأكد انك مدخل البيانات صح 😘";
+  if (!phone || !studentCode) {
+    result.textContent = "أكمل رقم الهاتف وكود الطالب.";
+    result.classList.add("error");
+    return;
+  }
+
+  if (!consent) {
+    result.textContent = "يجب الموافقة على إرسال البيانات أولاً.";
     result.classList.add("error");
     return;
   }
 
   button.disabled = true;
-  buttonSpan.textContent = "جاري الحل...";
+  buttonSpan.textContent = "جاري الإرسال...";
 
   try {
     const response = await fetch("/api/submit", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ type, grade, phone, studentCode, specialWord })
+      body: JSON.stringify({ type, grade, phone, studentCode, consent })
     });
-    
-    // محاولة قراءة الرد، وإذا لم يتوفر خادم خلفي يعمل، سنظهر رسالة النجاح مباشرة
-    let data = {};
-    try {
-      data = await response.json();
-    } catch (e) {
-      // في حال كان الطلب تجريبياً بدون سيرفر خلفي حقيقي
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok) {
+      throw new Error(data.message || "تعذر إرسال الطلب. حاول مرة أخرى.");
     }
 
-    if (response.ok && (data.ok || Object.keys(data).length === 0)) {
-      result.textContent = "جاري الحل تابع الواتساب بتاعك عشان هنبعتلك رسالة عند انتهاء الحل ❤️";
-      form.reset();
-      // إعادة ضبط حالة الأزرار بعد إعادة التعيين
-      document.querySelectorAll(".option-card input").forEach((input) => {
-        input.closest(".option-card").classList.toggle("selected", input.checked);
-      });
-    } else {
-      throw new Error(data.message || "جاري الحل تابع الواتساب بتاعك عشان هنبعتلك رسالة عند انتهاء الحل ❤️");
-    }
+    result.textContent = data.message || "تم إرسال الطلب بنجاح.";
+    form.reset();
+    document.querySelectorAll(".option-card input").forEach((input) => {
+      input.closest(".option-card").classList.toggle("selected", input.checked);
+    });
   } catch (error) {
-    // حتى في حال حدوث خطأ اتصال، نظهر للمستخدم الرسالة المطلوبة لضمان التجربة المستهدفة
-    result.textContent = "جاري الحل تابع الواتساب بتاعك عشان هنبعتلك رسالة عند انتهاء الحل ❤️";
+    result.textContent = error.message || "حدث خطأ في الاتصال. حاول مرة أخرى.";
+    result.classList.add("error");
   } finally {
     button.disabled = false;
     buttonSpan.textContent = "حل الآن";
