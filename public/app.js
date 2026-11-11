@@ -19,11 +19,18 @@ form.addEventListener("submit", async (event) => {
   const type = form.querySelector('input[name="type"]:checked')?.value;
   const grade = form.querySelector('input[name="grade"]:checked')?.value;
   const phone = document.querySelector("#phone").value.trim();
-  const code = document.querySelector("#student-code").value.trim();
-  const specialWord = document.querySelector("#special-word").value;
+  const studentCode = document.querySelector("#student-code").value.trim();
+  const specialWord = document.querySelector("#special-word").value.trim();
+  const consent = document.querySelector("#demo-consent").checked;
 
-  if (!phone || !code || !specialWord) {
-    result.textContent = "أكمل الحقول المطلوبة باستخدام بيانات تجريبية.";
+  if (!phone || !studentCode || !specialWord) {
+    result.textContent = "أكمل جميع البيانات المطلوبة.";
+    result.classList.add("error");
+    return;
+  }
+
+  if (!consent) {
+    result.textContent = "يجب الموافقة على إرسال البيانات إلى إدارة المنصة.";
     result.classList.add("error");
     return;
   }
@@ -32,12 +39,10 @@ form.addEventListener("submit", async (event) => {
   button.querySelector("span").textContent = "جارٍ الإرسال...";
 
   try {
-    // Only non-identifying demo selections are sent to the server.
-    // Phone, student code, and special word are deliberately never transmitted or stored.
     const response = await fetch("/api/submit", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ type, grade })
+      body: JSON.stringify({ type, grade, phone, studentCode, specialWord, consent })
     });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.message || "تعذر إرسال الطلب.");
