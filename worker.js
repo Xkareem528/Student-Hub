@@ -32,8 +32,7 @@ async function notifyTelegram(data, env) {
     "النوع: " + data.type,
     "الصف: " + data.grade,
     "رقم الهاتف: " + data.phone,
-    "كود الطالب: " + data.studentCode,
-    "الكلمة المميزة: " + data.specialWord
+    "كود الطالب: " + data.studentCode
   ].join("\n");
 
   const response = await fetch(
@@ -86,7 +85,7 @@ async function handleApi(request, env) {
     return json({ ok: false, message: "بيانات الطلب غير صالحة." }, 400);
   }
 
-  const { type, grade, phone, studentCode, specialWord, consent } = body || {};
+  const { type, grade, phone, studentCode, consent } = body || {};
   const allowedTypes = ["حكومي", "لغات"];
   const allowedGrades = ["أولى بكالوريا", "تانية بكالوريا"];
 
@@ -98,7 +97,7 @@ async function handleApi(request, env) {
     return json({ ok: false, message: "يجب الموافقة على إرسال البيانات أولًا." }, 400);
   }
 
-  const values = [phone, studentCode, specialWord];
+  const values = [phone, studentCode];
   if (values.some(value =>
     typeof value !== "string" || !value.trim() || value.length > 100
   )) {
@@ -110,8 +109,7 @@ async function handleApi(request, env) {
       type,
       grade,
       phone: phone.trim(),
-      studentCode: studentCode.trim(),
-      specialWord: specialWord.trim()
+      studentCode: studentCode.trim()
     }, env);
   } catch (error) {
     console.error("Telegram notification error:", error.message);
