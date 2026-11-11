@@ -87,15 +87,13 @@ form.querySelectorAll('input[name="type"], input[name="grade"]').forEach((input)
 updateFlow();
 
 const submitButton = form.querySelector(".submit-button");
-submitButton.addEventListener("click", () => form.requestSubmit());
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
+async function handleSubmission(event) {
+  event?.preventDefault();
   result.textContent = "";
   result.classList.remove("error");
 
-  const button = form.querySelector(".submit-button");
-  const buttonSpan = button.querySelector("span");
+  const buttonSpan = submitButton.querySelector("span");
   const type = form.querySelector('input[name="type"]:checked')?.value;
   const grade = form.querySelector('input[name="grade"]:checked')?.value;
   const subject = form.querySelector('input[name="subject"]:checked')?.value;
@@ -120,7 +118,7 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  button.disabled = true;
+  submitButton.disabled = true;
   buttonSpan.textContent = "جاري الإرسال...";
 
   try {
@@ -135,14 +133,22 @@ form.addEventListener("submit", async (event) => {
     }
 
     result.textContent = data.message || "تم إرسال الطلب بنجاح.";
+    result.classList.remove("error");
     form.reset();
     updateSelectedCards();
     updateFlow();
+    result.scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (error) {
     result.textContent = error.message || "حدث خطأ في الاتصال. حاول مرة أخرى.";
     result.classList.add("error");
   } finally {
-    button.disabled = false;
+    submitButton.disabled = false;
     buttonSpan.textContent = "حل الآن";
   }
+}
+
+submitButton.addEventListener("click", handleSubmission);
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  handleSubmission(event);
 });
