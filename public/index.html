@@ -63,6 +63,12 @@
           </div>
         </fieldset>
 
+        <fieldset id="subject-fieldset" hidden>
+          <legend>المادة الدراسية</legend>
+          <div id="subject-options" class="option-grid"></div>
+        </fieldset>
+
+        <div id="student-details" hidden>
         <div class="fields">
           <label class="field"><span>رقم الهاتف</span><input id="phone" type="tel" inputmode="numeric" autocomplete="off" placeholder="أدخل رقم الهاتف" maxlength="30" required></label>
           <label class="field"><span>كود الطالب</span><input id="student-code" type="text" autocomplete="off" placeholder="أدخل كود الطالب" maxlength="100" required></label>
@@ -75,6 +81,7 @@
         </label>
         <button class="submit-button" type="submit"><span>حل الآن</span><b>←</b></button>
         <p id="result" class="result" role="status" aria-live="polite"></p>
+        </div>
       </form>
       <div class="panel-foot"><span>✦</span> EDU SOLVER <span class="foot-separator">•</span> SMART LEARNING</div>
     </section>
