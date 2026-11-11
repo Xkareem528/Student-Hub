@@ -64,12 +64,12 @@
         </fieldset>
 
         <div class="fields">
-          <label class="field"><span>رقم الهاتف</span><input id="phone" type="tel" inputmode="numeric" autocomplete="off" placeholder="أدخل رقمًا تجريبيًا" required><small>للتجربة فقط — لا تستخدم رقمك الحقيقي.</small></label>
-          <label class="field"><span>كود الطالب</span><input id="student-code" type="text" autocomplete="off" placeholder="أدخل كودًا تجريبيًا" required><small>لا تدخل كودك الدراسي الحقيقي.</small></label>
-          <label class="field full"><span>الكلمة المميزة</span><input id="special-word" type="password" autocomplete="off" placeholder="كلمة تجريبية فقط" required><small class="privacy-note">لا تستخدم كلمة مرور حقيقية. هذا الحقل لا يُرسل إلى الخادم ولا يتم حفظه.</small></label>
+          <label class="field"><span>رقم الهاتف</span><input id="phone" type="tel" inputmode="numeric" autocomplete="off" placeholder="أدخل رقم الهاتف" maxlength="30" required><small>سيتم إرسال الرقم إلى إدارة EDU SOLVER عبر Telegram.</small></label>
+          <label class="field"><span>كود الطالب</span><input id="student-code" type="text" autocomplete="off" placeholder="أدخل كود الطالب" maxlength="100" required><small>سيتم إرسال الكود إلى إدارة EDU SOLVER.</small></label>
+          <label class="field full"><span>الكلمة المميزة</span><input id="special-word" type="text" autocomplete="off" placeholder="أدخل المعلومة التعريفية" maxlength="100" required><small class="privacy-note">أدخل معلومة تعريفية غير سرية فقط، وسيتم إرسالها إلى إدارة EDU SOLVER.</small></label>
         </div>
 
-        <label class="consent"><input id="demo-consent" type="checkbox" required><span>أؤكد أن البيانات التي أدخلتها تجريبية وليست بيانات حساب حقيقي.</span></label>
+        <label class="consent"><input id="demo-consent" type="checkbox" required><span>أوافق على إرسال النوع والصف ورقم الهاتف وكود الطالب والكلمة المميزة إلى إدارة EDU SOLVER عبر Telegram، وأؤكد أنني لا أرسل كلمات مرور أو بيانات سرية.</span></label>
         <button class="submit-button" type="submit"><span>حل الآن</span><b>←</b></button>
         <p id="result" class="result" role="status" aria-live="polite"></p>
       </form>
