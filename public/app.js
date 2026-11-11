@@ -133,7 +133,7 @@ function createPaymentStep() {
       });
       instruction.textContent = "جاري تحميل بيانات الدفع...";
       try {
-        const response = await fetch("/api/payment-info", { cache: "no-store" });
+        const response = await fetch("https://student-hub.kareemahmedhussein4.workers.dev/api/payment-info", { cache: "no-store" });
         const data = await response.json();
         if (!response.ok || !data.ok) throw new Error(data.message || "تعذر تحميل بيانات الدفع.");
         const details = data.methods[radio.value];
@@ -202,7 +202,7 @@ async function submitPaidOrder() {
     payload.append("senderPhone", senderPhone);
     payload.append("receipt", receipt, receipt.name);
 
-    const response = await fetch("/api/submit", { method: "POST", body: payload });
+    const response = await fetch("https://student-hub.kareemahmedhussein4.workers.dev/api/submit", { method: "POST", body: payload });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.ok) throw new Error(data.message || "تعذر إرسال الطلب. حاول مرة أخرى.");
 
