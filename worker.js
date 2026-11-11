@@ -67,9 +67,9 @@ async function handleApi(request, env) {
     return json({
       ok: true,
       methods: {
-        "InstaPay": env.INSTAPAY_RECEIVER || "",
-        "Vodafone Cash": env.VODAFONE_CASH_RECEIVER || "",
-        "Telda": env.TELDA_RECEIVER || ""
+        "InstaPay": env.INSTAPAY_RECEIVER || "01004876339",
+        "Vodafone Cash": env.VODAFONE_CASH_RECEIVER || "01063942772",
+        "Telda": env.TELDA_RECEIVER || "@kareemahme675859" || "@kareemahme675859"
       }
     });
   }
@@ -140,8 +140,8 @@ async function handleApi(request, env) {
   }
 
   const paymentDetails = {
-    "InstaPay": env.INSTAPAY_RECEIVER,
-    "Vodafone Cash": env.VODAFONE_CASH_RECEIVER,
+    "InstaPay": env.INSTAPAY_RECEIVER || "01004876339",
+    "Vodafone Cash": env.VODAFONE_CASH_RECEIVER || "01063942772",
     "Telda": env.TELDA_RECEIVER
   };
   if (!paymentDetails[paymentMethod]) {
