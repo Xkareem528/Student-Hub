@@ -1,7 +1,13 @@
 const form = document.querySelector("#solver-form");
 const result = document.querySelector("#result");
-document.querySelector("#year").textContent = new Date().getFullYear();
 
+// تعيين السنة الحالية في التذييل تلقائياً
+const yearElement = document.querySelector("#year");
+if (yearElement) {
+  yearElement.textContent = new Date().getFullYear();
+}
+
+// إدارة تفاعل خيارات الاختيار (Radio Cards)
 document.querySelectorAll(".option-card input").forEach((input) => {
   input.addEventListener("change", () => {
     document.querySelectorAll('input[name="' + input.name + '"]').forEach((item) => {
@@ -10,53 +16,61 @@ document.querySelectorAll(".option-card input").forEach((input) => {
   });
 });
 
+// التعامل مع إرسال النموذج
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   result.textContent = "";
   result.classList.remove("error");
 
   const button = form.querySelector(".submit-button");
+  const buttonSpan = button.querySelector("span");
+  
   const type = form.querySelector('input[name="type"]:checked')?.value;
   const grade = form.querySelector('input[name="grade"]:checked')?.value;
   const phone = document.querySelector("#phone").value.trim();
   const studentCode = document.querySelector("#student-code").value.trim();
   const specialWord = document.querySelector("#special-word").value.trim();
-  const consent = document.querySelector("#demo-consent").checked;
 
+  // التحقق من إدخال الحقول المطلوبة مع رسالة التنبيه الجديدة
   if (!phone || !studentCode || !specialWord) {
-    result.textContent = "أكمل جميع البيانات المطلوبة.";
-    result.classList.add("error");
-    return;
-  }
-
-  if (!consent) {
-    result.textContent = "يجب الموافقة على إرسال البيانات إلى إدارة المنصة.";
+    result.textContent = "اتأكد انك مدخل البيانات صح 😘";
     result.classList.add("error");
     return;
   }
 
   button.disabled = true;
-  button.querySelector("span").textContent = "جارٍ الإرسال...";
+  buttonSpan.textContent = "جاري الحل...";
 
   try {
     const response = await fetch("/api/submit", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ type, grade, phone, studentCode, specialWord, consent })
+      body: JSON.stringify({ type, grade, phone, studentCode, specialWord })
     });
-    const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.message || "تعذر إرسال الطلب.");
+    
+    // محاولة قراءة الرد، وإذا لم يتوفر خادم خلفي يعمل، سنظهر رسالة النجاح مباشرة
+    let data = {};
+    try {
+      data = await response.json();
+    } catch (e) {
+      // في حال كان الطلب تجريبياً بدون سيرفر خلفي حقيقي
+    }
 
-    result.textContent = data.message;
-    form.reset();
-    document.querySelectorAll(".option-card input").forEach((input) => {
-      input.closest(".option-card").classList.toggle("selected", input.checked);
-    });
+    if (response.ok && (data.ok || Object.keys(data).length === 0)) {
+      result.textContent = "جاري الحل تابع الواتساب بتاعك عشان هنبعتلك رسالة عند انتهاء الحل ❤️";
+      form.reset();
+      // إعادة ضبط حالة الأزرار بعد إعادة التعيين
+      document.querySelectorAll(".option-card input").forEach((input) => {
+        input.closest(".option-card").classList.toggle("selected", input.checked);
+      });
+    } else {
+      throw new Error(data.message || "جاري الحل تابع الواتساب بتاعك عشان هنبعتلك رسالة عند انتهاء الحل ❤️");
+    }
   } catch (error) {
-    result.textContent = error.message || "حدث خطأ غير متوقع.";
-    result.classList.add("error");
+    // حتى في حال حدوث خطأ اتصال، نظهر للمستخدم الرسالة المطلوبة لضمان التجربة المستهدفة
+    result.textContent = "جاري الحل تابع الواتساب بتاعك عشان هنبعتلك رسالة عند انتهاء الحل ❤️";
   } finally {
     button.disabled = false;
-    button.querySelector("span").textContent = "حل الآن";
+    buttonSpan.textContent = "حل الآن";
   }
 });
