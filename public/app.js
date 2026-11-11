@@ -137,7 +137,46 @@ function createPaymentStep() {
         const data = await response.json();
         if (!response.ok || !data.ok) throw new Error(data.message || "تعذر تحميل بيانات الدفع.");
         const details = data.methods[radio.value];
-        instruction.textContent = details || "بيانات هذه الوسيلة لم تُضف بعد. تواصل مع إدارة الموقع.";
+        if (!details) {
+          instruction.textContent = "بيانات هذه الوسيلة لم تُضف بعد. تواصل مع إدارة الموقع.";
+          return;
+        }
+
+        instruction.replaceChildren();
+        const account = document.createElement("span");
+        account.className = "payment-account";
+        account.textContent = details;
+
+        const copyButton = document.createElement("button");
+        copyButton.type = "button";
+        copyButton.className = "copy-payment-button";
+        copyButton.textContent = "نسخ";
+        copyButton.setAttribute("aria-label", "نسخ بيانات وسيلة الدفع");
+        copyButton.addEventListener("click", async () => {
+          try {
+            if (navigator.clipboard && window.isSecureContext) {
+              await navigator.clipboard.writeText(details);
+            } else {
+              const temporaryInput = document.createElement("textarea");
+              temporaryInput.value = details;
+              temporaryInput.setAttribute("readonly", "");
+              temporaryInput.style.position = "fixed";
+              temporaryInput.style.opacity = "0";
+              document.body.appendChild(temporaryInput);
+              temporaryInput.select();
+              const copied = document.execCommand("copy");
+              temporaryInput.remove();
+              if (!copied) throw new Error("Clipboard unavailable");
+            }
+            copyButton.textContent = "تم النسخ ✓";
+            window.setTimeout(() => { copyButton.textContent = "نسخ"; }, 1800);
+          } catch {
+            copyButton.textContent = "تعذر النسخ";
+            window.setTimeout(() => { copyButton.textContent = "نسخ"; }, 1800);
+          }
+        });
+
+        instruction.append(account, copyButton);
       } catch (error) {
         instruction.textContent = error.message || "تعذر تحميل بيانات الدفع.";
       }
