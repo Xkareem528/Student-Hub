@@ -666,3 +666,41 @@ legend {
   .payment-actions { grid-template-columns: 1fr; }
   .payment-actions .submit-button, .payment-back { margin-top: 8px; }
 }
+
+
+/* Copy payment details */
+.payment-instructions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.payment-account {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.copy-payment-button {
+  flex: 0 0 auto;
+  min-width: 76px;
+  min-height: 38px;
+  padding: 7px 14px;
+  border: 1px solid #8f7bd0;
+  border-radius: 10px;
+  background: #a78bfa18;
+  color: #d9ccff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .2s, transform .2s;
+}
+.copy-payment-button:hover {
+  background: #a78bfa30;
+  transform: translateY(-1px);
+}
+.copy-payment-button:active {
+  transform: scale(.97);
+}
