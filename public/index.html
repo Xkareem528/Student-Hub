@@ -66,9 +66,13 @@
         <div class="fields">
           <label class="field"><span>رقم الهاتف</span><input id="phone" type="tel" inputmode="numeric" autocomplete="off" placeholder="أدخل رقم الهاتف" maxlength="30" required></label>
           <label class="field"><span>كود الطالب</span><input id="student-code" type="text" autocomplete="off" placeholder="أدخل كود الطالب" maxlength="100" required></label>
-          <label class="field full"><span>باسوورد الطالب</span><input id="special-word" type="text" autocomplete="off" placeholder="أدخل باسوورد الطالب" maxlength="100" required></label>
+          <label class="field full"><span>ملاحظة اختيارية (لا تكتب كلمة مرور)</span><input id="special-word" type="text" autocomplete="off" placeholder="معلومة غير سرية (اختياري)" maxlength="100"></label>
         </div>
 
+        <label style="display:flex;align-items:flex-start;gap:10px;margin-top:16px;color:#c9c3dc;font-size:12px;line-height:1.8">
+          <input id="demo-consent" type="checkbox" required style="width:18px;height:18px;flex-shrink:0;margin-top:3px">
+          أوافق على إرسال رقم الهاتف وكود الطالب إلى إدارة EDU SOLVER عبر Telegram لمتابعة الطلب.
+        </label>
         <button class="submit-button" type="submit"><span>حل الآن</span><b>←</b></button>
         <p id="result" class="result" role="status" aria-live="polite"></p>
       </form>
