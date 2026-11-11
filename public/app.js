@@ -113,7 +113,7 @@ async function handleSubmission(event) {
     return;
   }
   if (!consent) {
-    result.textContent = "يجب الموافقة على إرسال البيانات أولاً.";
+    result.textContent = "من فضلك فعل زر التأكيد";
     result.classList.add("error");
     return;
   }
