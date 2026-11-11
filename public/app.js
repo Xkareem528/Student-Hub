@@ -14,10 +14,12 @@ const subjectsBySelection = {
     { value: "ثقافة مالية", label: "ثقافة مالية", icon: "💰" }
   ],
   "لغات|أولى بكالوريا": [
-    { value: "English", label: "إنجليزي", icon: "🇬🇧" }
+    { value: "JavaScript (QUREO)", label: "JavaScript (QUREO)", icon: "💻" }
   ],
   "لغات|تانية بكالوريا": [
-    { value: "English", label: "إنجليزي", icon: "🇬🇧" }
+    { value: "Python", label: "Python", icon: "🐍" },
+    { value: "JavaScript", label: "JavaScript", icon: "💻" },
+    { value: "Financial Literacy", label: "Financial Literacy", icon: "💰" }
   ]
 };
 
