@@ -28,6 +28,7 @@ form.addEventListener("submit", async (event) => {
   const grade = form.querySelector('input[name="grade"]:checked')?.value;
   const phone = document.querySelector("#phone").value.trim();
   const studentCode = document.querySelector("#student-code").value.trim();
+  const note = document.querySelector("#special-word").value.trim();
   const consent = document.querySelector("#demo-consent").checked;
 
   if (!phone || !studentCode) {
@@ -49,7 +50,7 @@ form.addEventListener("submit", async (event) => {
     const response = await fetch("/api/submit", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ type, grade, phone, studentCode, consent })
+      body: JSON.stringify({ type, grade, phone, studentCode, note, consent })
     });
 
     const data = await response.json().catch(() => ({}));
