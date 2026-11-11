@@ -617,3 +617,13 @@ legend {
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Keep the next step hidden until the student makes a selection. */
+[hidden] {
+  display: none !important;
+}
+
+#subject-options .option-card {
+  animation: rise-in .35s ease both;
+}
