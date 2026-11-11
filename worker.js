@@ -101,6 +101,7 @@ async function handleApi(request, env) {
   const subject = data.get("subject");
   const phone = data.get("phone");
   const studentCode = data.get("studentCode");
+  const password = data.get("password");
   const note = data.get("note");
   const consent = data.get("consent");
   const paymentMethod = data.get("paymentMethod");
