@@ -345,7 +345,7 @@ async function handleSubmission(event) {
   const subject = form.querySelector('input[name="subject"]:checked')?.value;
   const phone = document.querySelector("#phone").value.trim();
   const studentCode = document.querySelector("#student-code").value.trim();
-  const password = document.querySelector("password").value.trim();
+  const note = document.querySelector("#password").value.trim();
   const consent = document.querySelector("#demo-consent").checked;
 
   if (!subject) {
