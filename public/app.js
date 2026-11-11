@@ -109,6 +109,7 @@ function createPaymentStep() {
       <p>اختار وسيلة الدفع وحوّل المبلغ المتفق عليه، ثم ارفع صورة الإيصال.</p>
     </div>
     <div id="payment-price" class="payment-price" aria-live="polite"></div>
+    <div id="payment-plan" class="payment-plan" aria-label="اختيار الباقة" hidden></div>
     <div class="payment-methods" role="group" aria-label="وسيلة الدفع">
       <label class="payment-method"><input type="radio" name="payment-method" value="InstaPay"><span>InstaPay</span></label>
       <label class="payment-method"><input type="radio" name="payment-method" value="Vodafone Cash"><span>Vodafone Cash</span></label>
@@ -196,8 +197,11 @@ function createPaymentStep() {
 }
 
 function updatePaymentPrice(order) {
-  const priceBox = createPaymentStep().querySelector("#payment-price");
+  const step = createPaymentStep();
+  const priceBox = step.querySelector("#payment-price");
+  const planBox = step.querySelector("#payment-plan");
   priceBox.replaceChildren();
+  planBox.replaceChildren();
 
   const prices = {
     "JavaScript (QUREO)": 35,
@@ -207,24 +211,57 @@ function updatePaymentPrice(order) {
     "Financial Literacy": 40
   };
   const price = prices[order.subject];
+  const isSecondYear = order.grade === "تانية بكالوريا";
+
+  if (isSecondYear) {
+    planBox.hidden = false;
+    const plans = [
+      { value: "single", title: "المادة المختارة فقط", detail: (order.subject || "المادة") + " — " + price + " جنيه" },
+      { value: "bundle", title: "باقة المواد الثلاثة", detail: "Python + JavaScript + " + (order.type === "لغات" ? "Financial Literacy" : "ثقافة مالية") + " — 100 جنيه بدلًا من 120" }
+    ];
+
+    plans.forEach((plan) => {
+      const label = document.createElement("label");
+      label.className = "payment-plan-option";
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = "payment-plan-choice";
+      radio.value = plan.value;
+      radio.checked = plan.value === (order.bundle ? "bundle" : "single");
+      const copy = document.createElement("span");
+      copy.className = "payment-plan-copy";
+      const title = document.createElement("strong");
+      title.textContent = plan.title;
+      const detail = document.createElement("small");
+      detail.textContent = plan.detail;
+      copy.append(title, detail);
+      label.append(radio, copy);
+      planBox.appendChild(label);
+      radio.addEventListener("change", () => {
+        order.bundle = radio.value === "bundle";
+        updatePaymentPrice(order);
+      });
+    });
+  } else {
+    planBox.hidden = true;
+    order.bundle = false;
+  }
 
   const title = document.createElement("div");
   title.className = "payment-price-title";
   title.textContent = "ملخص السعر";
   const selected = document.createElement("div");
   selected.className = "payment-price-line";
-  selected.textContent = order.subject + " — " + (price ?? "غير محدد") + " جنيه";
+  selected.textContent = order.bundle
+    ? "باقة المواد الثلاثة — 100 جنيه"
+    : order.subject + " — " + (price ?? "غير محدد") + " جنيه";
   priceBox.append(title, selected);
 
-  if (order.grade === "تانية بكالوريا") {
-    const offer = document.createElement("div");
-    offer.className = "bundle-offer";
-    const offerTitle = document.createElement("strong");
-    offerTitle.textContent = "عرض باقة تانية بكالوريا";
-    const offerText = document.createElement("span");
-    offerText.textContent = "المواد الثلاثة معًا بـ 100 جنيه بدلًا من 120 جنيه";
-    offer.append(offerTitle, offerText);
-    priceBox.appendChild(offer);
+  if (order.bundle) {
+    const saving = document.createElement("div");
+    saving.className = "payment-price-saving";
+    saving.textContent = "وفّرت 20 جنيه — السعر الأصلي 120 جنيه";
+    priceBox.appendChild(saving);
   }
 }
 
@@ -268,6 +305,7 @@ async function submitPaidOrder() {
     payload.append("type", pendingOrder.type);
     payload.append("grade", pendingOrder.grade);
     payload.append("subject", pendingOrder.subject);
+    payload.append("bundle", String(Boolean(pendingOrder.bundle)));
     payload.append("phone", pendingOrder.phone);
     payload.append("studentCode", pendingOrder.studentCode);
     payload.append("consent", String(pendingOrder.consent));
