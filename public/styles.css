@@ -704,3 +704,44 @@ legend {
 .copy-payment-button:active {
   transform: scale(.97);
 }
+
+
+/* Payment prices and second-year bundle offer */
+.payment-price {
+  margin: 14px 0;
+  padding: 15px;
+  border: 1px solid #7563a5;
+  border-radius: 13px;
+  background: linear-gradient(120deg, #30244d88, #162d3888);
+  line-height: 1.8;
+}
+.payment-price-title {
+  color: #b9a5ff;
+  font-size: 12px;
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+.payment-price-line {
+  color: #f8f6ff;
+  font-size: 16px;
+  font-weight: 900;
+}
+.bundle-offer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 11px;
+  padding: 10px 12px;
+  border: 1px dashed #72cfc5;
+  border-radius: 10px;
+  background: #72e4e012;
+}
+.bundle-offer strong {
+  color: #8ce8d9;
+  font-size: 12px;
+}
+.bundle-offer span {
+  color: #e2fff8;
+  font-size: 12px;
+  font-weight: 800;
+}
