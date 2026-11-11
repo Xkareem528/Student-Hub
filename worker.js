@@ -105,6 +105,7 @@ async function handleApi(request, env) {
   const paymentMethod = data.get("paymentMethod");
   const senderPhone = data.get("senderPhone");
   const receipt = data.get("receipt");
+  const bundle = data.get("bundle") === "true";
 
   const allowedTypes = ["حكومي", "لغات"];
   const allowedGrades = ["أولى بكالوريا", "تانية بكالوريا"];
@@ -116,7 +117,8 @@ async function handleApi(request, env) {
   };
 
   if (!allowedTypes.includes(type) || !allowedGrades.includes(grade) ||
-      !allowedSubjects[type + "|" + grade]?.includes(subject)) {
+      !allowedSubjects[type + "|" + grade]?.includes(subject) ||
+      (bundle && grade !== "تانية بكالوريا")) {
     return json({ ok: false, message: "اختيارات الطلب غير صحيحة." }, 400);
   }
   if (consent !== "true") {
@@ -148,11 +150,25 @@ async function handleApi(request, env) {
     return json({ ok: false, message: "بيانات وسيلة الدفع لم تُضف بعد. حاول لاحقًا." }, 503);
   }
 
+  const prices = {
+    "JavaScript (QUREO)": 35,
+    "JavaScript": 40,
+    "Python": 40,
+    "ثقافة مالية": 40,
+    "Financial Literacy": 40
+  };
+  const amount = bundle ? 100 : prices[subject];
+  const orderDescription = bundle
+    ? "باقة المواد الثلاثة: Python + JavaScript + " + (type === "لغات" ? "Financial Literacy" : "ثقافة مالية")
+    : subject;
+
   const caption = [
     "طلب جديد من EDU SOLVER — إثبات دفع",
     "النوع: " + type,
     "الصف: " + grade,
-    "المادة: " + subject,
+    "الطلب: " + orderDescription,
+    "المادة المختارة في النموذج: " + subject,
+    "المبلغ المطلوب: " + amount + " جنيه",
     "رقم الطالب: " + phone,
     "كود الطالب: " + studentCode,
     "وسيلة الدفع: " + paymentMethod,
