@@ -108,6 +108,7 @@ function createPaymentStep() {
       <h3>إتمام الدفع</h3>
       <p>اختار وسيلة الدفع وحوّل المبلغ المتفق عليه، ثم ارفع صورة الإيصال.</p>
     </div>
+    <div id="payment-price" class="payment-price" aria-live="polite"></div>
     <div class="payment-methods" role="group" aria-label="وسيلة الدفع">
       <label class="payment-method"><input type="radio" name="payment-method" value="InstaPay"><span>InstaPay</span></label>
       <label class="payment-method"><input type="radio" name="payment-method" value="Vodafone Cash"><span>Vodafone Cash</span></label>
@@ -192,6 +193,39 @@ function createPaymentStep() {
 
   step.querySelector("#payment-confirm").addEventListener("click", submitPaidOrder);
   return step;
+}
+
+function updatePaymentPrice(order) {
+  const priceBox = createPaymentStep().querySelector("#payment-price");
+  priceBox.replaceChildren();
+
+  const prices = {
+    "JavaScript (QUREO)": 35,
+    "JavaScript": 40,
+    "Python": 40,
+    "ثقافة مالية": 40,
+    "Financial Literacy": 40
+  };
+  const price = prices[order.subject];
+
+  const title = document.createElement("div");
+  title.className = "payment-price-title";
+  title.textContent = "ملخص السعر";
+  const selected = document.createElement("div");
+  selected.className = "payment-price-line";
+  selected.textContent = order.subject + " — " + (price ?? "غير محدد") + " جنيه";
+  priceBox.append(title, selected);
+
+  if (order.grade === "تانية بكالوريا") {
+    const offer = document.createElement("div");
+    offer.className = "bundle-offer";
+    const offerTitle = document.createElement("strong");
+    offerTitle.textContent = "عرض باقة تانية بكالوريا";
+    const offerText = document.createElement("span");
+    offerText.textContent = "المواد الثلاثة معًا بـ 100 جنيه بدلًا من 120 جنيه";
+    offer.append(offerTitle, offerText);
+    priceBox.appendChild(offer);
+  }
 }
 
 async function submitPaidOrder() {
@@ -294,6 +328,7 @@ async function handleSubmission(event) {
   submitButton.querySelector("span").textContent = "جاري تجهيز الدفع...";
 
   const step = createPaymentStep();
+  updatePaymentPrice(pendingOrder);
   step.hidden = false;
   studentDetails.hidden = true;
   step.scrollIntoView({ behavior: "smooth", block: "start" });
