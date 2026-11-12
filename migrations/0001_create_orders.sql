@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS orders (
   student_code TEXT NOT NULL,
   payment_method TEXT NOT NULL,
   sender_phone TEXT NOT NULL,
-  receipt_key TEXT NOT NULL,
   receipt_type TEXT NOT NULL,
   receipt_size INTEGER NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending'
