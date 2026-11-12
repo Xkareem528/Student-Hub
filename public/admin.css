@@ -1,0 +1,24 @@
+:root{color-scheme:dark;--bg:#090817;--panel:#15122a;--line:#393252;--purple:#b49aff;--cyan:#72e4e0;--muted:#aaa3bf;--white:#f8f6ff}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#211744 0,transparent 45%),var(--bg);color:var(--white);font-family:Tahoma,Arial,sans-serif}
+button,input,select{font:inherit}.wrap{width:min(1100px,calc(100% - 30px));margin:auto}.top{height:82px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff12;margin-bottom:32px}
+.brand{font-size:20px;font-weight:900;color:var(--white);text-decoration:none}.brand b{color:var(--purple)}.brand small{display:block;font-size:9px;letter-spacing:2px;color:var(--muted);margin-top:4px}
+.card,.stat{background:linear-gradient(145deg,#1c1836f0,#100f23f0);border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 60px #0003}
+.login-card{max-width:440px;margin:8vh auto;padding:28px}.eyebrow{font-size:10px;letter-spacing:2px;color:var(--cyan);font-weight:800}
+h1{font-size:27px;margin:8px 0}h2{font-size:21px;margin:5px 0}.login-card p{color:var(--muted);font-size:13px;line-height:1.8}
+label{display:grid;gap:8px;font-size:12px;font-weight:700;margin-top:20px}
+input,select{min-width:0;background:#0c0b1b;border:1px solid #40385c;border-radius:10px;color:var(--white);padding:12px;outline:none}
+input:focus,select:focus{border-color:var(--purple);box-shadow:0 0 0 3px #a78bfa20}
+.primary,.ghost{border:1px solid #7563a5;border-radius:10px;padding:11px 15px;cursor:pointer;font-weight:800}
+.primary{width:100%;margin-top:17px;background:linear-gradient(100deg,#b49aff,#72e4e0);color:#100e20;border:0}.ghost{background:#ffffff08;color:var(--white)}button:disabled{opacity:.6;cursor:wait}
+.message{min-height:22px;color:var(--cyan);font-size:12px}.message.error{color:#ff9dba}
+.heading,.orders-heading{display:flex;align-items:center;justify-content:space-between;gap:15px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}
+.stat{padding:17px;display:grid;gap:8px}.stat span,.stat small{font-size:11px;color:var(--muted)}.stat strong{font-size:27px;color:var(--cyan)}
+.orders-card{padding:22px}.muted{font-size:12px;color:var(--muted)}.filters{display:grid;grid-template-columns:1fr 210px 90px;gap:9px;margin:18px 0}
+.orders-list{display:grid;gap:12px}.order{border:1px solid #393252;background:#0e0d20;border-radius:14px;padding:16px}
+.order-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.order-identity{display:grid;gap:5px;min-width:0}.order-identity strong{font-size:15px}.order-identity small{font-size:10px;color:var(--muted);overflow-wrap:anywhere}
+.status-badge{font-size:10px;padding:7px 10px;border-radius:20px;background:#ffffff12;white-space:nowrap}.status-pending{color:#ffd18a;background:#ffd18a14}.status-approved,.status-completed{color:#82e6c2;background:#82e6c214}.status-rejected{color:#ff9dba;background:#ff9dba14}.status-processing{color:#9fc5ff;background:#9fc5ff14}
+.order-details{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}.detail{display:grid;gap:4px;min-width:0}.detail span{font-size:10px;color:var(--muted)}.detail b{font-size:12px;overflow-wrap:anywhere}
+.order-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.order-actions select{min-width:190px}.empty,.footnote{color:var(--muted);font-size:12px;text-align:center;padding:22px}
+dialog{width:min(700px,calc(100% - 24px));max-height:90vh;background:#121026;border:1px solid var(--line);border-radius:16px;color:var(--white);padding:15px}dialog::backdrop{background:#000b}.dialog-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}dialog img{display:block;max-width:100%;max-height:75vh;margin:auto;object-fit:contain}
+[hidden]{display:none!important}
+@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr}.order-details{grid-template-columns:repeat(2,1fr)}.heading{align-items:flex-start;flex-direction:column}.orders-card{padding:14px}.order-top{flex-direction:column}.status-badge{white-space:normal}}
