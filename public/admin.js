@@ -1,4 +1,4 @@
-const API = "https://student-hub.kareemahmedhussein4.workers.dev";
+const API = "https://edu-solver.kareemahmedhussein4.workers.dev";
 let adminToken = "";
 
 const $ = (selector) => document.querySelector(selector);
