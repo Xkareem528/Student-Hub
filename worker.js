@@ -154,7 +154,7 @@ async function safeEqual(a, b) {
 }
 
 function requireStorage(env) {
-  return Boolean(env.DB && env.RECEIPTS);
+  return Boolean(env.DB);
 }
 
 const STATUS_LABELS = {
@@ -189,7 +189,7 @@ async function handleAdmin(request, env) {
     return json({ ok: false, message: "يلزم تسجيل دخول الإدارة." }, 401);
   }
   if (!requireStorage(env)) {
-    return json({ ok: false, message: "قاعدة البيانات أو مساحة الإيصالات غير مربوطة بالـ Worker بعد." }, 503);
+    return json({ ok: false, message: "قاعدة بيانات D1 غير مربوطة بالـ Worker بعد." }, 503);
   }
 
   if (path === "/api/admin/orders" && request.method === "GET") {
@@ -214,21 +214,6 @@ async function handleAdmin(request, env) {
       "SELECT COUNT(*) AS total, SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed, COALESCE(SUM(CASE WHEN status IN ('approved','processing','completed') THEN amount ELSE 0 END), 0) AS revenue FROM orders"
     ).first();
     return json({ ok: true, orders: orders.results || [], stats: stats || {} });
-  }
-
-  const receiptMatch = path.match(/^\/api\/admin\/orders\/([a-f0-9-]+)\/receipt$/i);
-  if (receiptMatch && request.method === "GET") {
-    const order = await env.DB.prepare("SELECT receipt_key, receipt_type FROM orders WHERE id = ?").bind(receiptMatch[1]).first();
-    if (!order) return json({ ok: false, message: "الطلب غير موجود." }, 404);
-    const object = await env.RECEIPTS.get(order.receipt_key);
-    if (!object) return json({ ok: false, message: "الإيصال غير موجود." }, 404);
-    return new Response(object.body, {
-      headers: {
-        "content-type": order.receipt_type || "application/octet-stream",
-        "cache-control": "private, no-store",
-        "content-disposition": "inline"
-      }
-    });
   }
 
   const statusMatch = path.match(/^\/api\/admin\/orders\/([a-f0-9-]+)\/status$/i);
@@ -335,8 +320,6 @@ async function handleSubmit(request, env) {
     : subject;
 
   const id = crypto.randomUUID();
-  const extension = receipt.type === "image/png" ? "png" : receipt.type === "image/webp" ? "webp" : "jpg";
-  const receiptKey = id + "." + extension;
   const caption = [
     "طلب جديد من EDU SOLVER — إثبات دفع",
     "رقم الطلب: " + id,
@@ -353,18 +336,14 @@ async function handleSubmit(request, env) {
   ].join("\n");
 
   try {
-    await env.RECEIPTS.put(receiptKey, receipt.stream(), {
-      httpMetadata: { contentType: receipt.type }
-    });
     await env.DB.prepare(
-      "INSERT INTO orders (id, type, grade, subject, bundle, amount, phone, student_code, payment_method, sender_phone, receipt_key, receipt_type, receipt_size, status, telegram_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending')"
+      "INSERT INTO orders (id, type, grade, subject, bundle, amount, phone, student_code, payment_method, sender_phone, receipt_type, receipt_size, status, telegram_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending')"
     ).bind(
       id, type, grade, subject, bundle ? 1 : 0, amount, phone, studentCode,
-      paymentMethod, senderPhone, receiptKey, receipt.type, receipt.size
+      paymentMethod, senderPhone, receipt.type, receipt.size
     ).run();
   } catch (error) {
     console.error("Order storage error:", error.message);
-    await env.RECEIPTS.delete(receiptKey).catch(() => {});
     return json({ ok: false, message: "تعذر حفظ الطلب حاليًا. حاول مرة أخرى لاحقًا." }, 503);
   }
 
