@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090817">
+  <title>EDU SOLVER | Admin</title>
+  <link rel="stylesheet" href="/admin.css">
+  <script src="/admin.js" defer></script>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <a href="/" class="brand">EDU <b>SOLVER</b><small>ADMIN CONTROL</small></a>
+      <button id="logout" class="ghost" hidden>تسجيل الخروج</button>
+    </header>
+
+    <section id="login-card" class="card login-card">
+      <div class="eyebrow">SECURE ADMIN ACCESS</div>
+      <h1>لوحة الإدارة</h1>
+      <p>سجّل الدخول لمراجعة الطلبات وإدارة حالتها.</p>
+      <form id="login-form">
+        <label>كلمة مرور الإدارة
+          <input id="admin-password" type="password" autocomplete="current-password" required>
+        </label>
+        <button class="primary" type="submit">دخول لوحة الإدارة</button>
+      </form>
+      <p id="login-message" class="message" role="status"></p>
+    </section>
+
+    <section id="dashboard" hidden>
+      <div class="heading">
+        <div><div class="eyebrow">OVERVIEW</div><h1>مرحبًا بك في الإدارة</h1></div>
+        <button id="refresh" class="ghost">تحديث البيانات ↻</button>
+      </div>
+
+      <div class="stats">
+        <article class="stat"><span>إجمالي الطلبات</span><strong id="stat-total">—</strong></article>
+        <article class="stat"><span>بانتظار المراجعة</span><strong id="stat-pending">—</strong></article>
+        <article class="stat"><span>طلبات مكتملة</span><strong id="stat-completed">—</strong></article>
+        <article class="stat"><span>المبيعات المعتمدة</span><strong id="stat-revenue">—</strong><small>جنيه</small></article>
+      </div>
+
+      <section class="card orders-card">
+        <div class="orders-heading">
+          <div><div class="eyebrow">ORDERS MANAGEMENT</div><h2>الطلبات</h2></div>
+          <span id="orders-count" class="muted"></span>
+        </div>
+        <div class="filters">
+          <input id="search" type="search" placeholder="بحث برقم الطلب أو الهاتف أو الكود">
+          <select id="status-filter" aria-label="تصفية حسب الحالة">
+            <option value="">كل الحالات</option>
+            <option value="pending">في انتظار المراجعة</option>
+            <option value="approved">تم قبول الدفع</option>
+            <option value="rejected">تم رفض الدفع</option>
+            <option value="processing">جاري التنفيذ</option>
+            <option value="completed">مكتمل</option>
+          </select>
+          <button id="search-button" class="ghost">بحث</button>
+        </div>
+        <p id="dashboard-message" class="message" role="status"></p>
+        <div id="orders" class="orders-list"></div>
+      </section>
+      <p class="footnote">تُعرض أحدث 200 طلب. بيانات الدخول وكلمات مرور الطلاب لا تظهر في لوحة الإدارة.</p>
+    </section>
+  </main>
+
+  <dialog id="receipt-dialog">
+    <div class="dialog-head"><strong>إيصال التحويل</strong><button id="close-receipt" class="ghost">إغلاق</button></div>
+    <img id="receipt-image" alt="إيصال التحويل">
+  </dialog>
+</body>
+</html>
