@@ -1,6 +1,5 @@
 const API = "https://student-hub.kareemahmedhussein4.workers.dev";
 let adminToken = "";
-let currentReceiptUrl = "";
 
 const $ = (selector) => document.querySelector(selector);
 const statusLabels = {
@@ -66,9 +65,7 @@ function renderOrder(order) {
   });
 
   const actions = make("div", "order-actions");
-  const receiptButton = make("button", "ghost", "عرض الإيصال");
-  receiptButton.type = "button";
-  receiptButton.addEventListener("click", () => openReceipt(order.id));
+  const receiptNote = make("span", "receipt-note", "صورة الإيصال موجودة في رسالة Telegram الخاصة بهذا الطلب");
   const select = document.createElement("select");
   select.setAttribute("aria-label", "تغيير حالة الطلب");
   statusOptions.forEach(([value, label]) => {
@@ -95,22 +92,9 @@ function renderOrder(order) {
       select.disabled = false;
     }
   });
-  actions.append(receiptButton, select);
+  actions.append(receiptNote, select);
   card.append(top, details, actions);
   return card;
-}
-
-async function openReceipt(id) {
-  try {
-    const response = await api("/api/admin/orders/" + encodeURIComponent(id) + "/receipt");
-    const blob = await response.blob();
-    if (currentReceiptUrl) URL.revokeObjectURL(currentReceiptUrl);
-    currentReceiptUrl = URL.createObjectURL(blob);
-    $("#receipt-image").src = currentReceiptUrl;
-    $("#receipt-dialog").showModal();
-  } catch (error) {
-    showMessage($("#dashboard-message"), error.message, true);
-  }
 }
 
 async function loadOrders() {
@@ -181,10 +165,4 @@ $("#search-button").addEventListener("click", refresh);
 $("#status-filter").addEventListener("change", refresh);
 $("#search").addEventListener("keydown", event => {
   if (event.key === "Enter") refresh();
-});
-$("#close-receipt").addEventListener("click", () => $("#receipt-dialog").close());
-$("#receipt-dialog").addEventListener("close", () => {
-  if (currentReceiptUrl) URL.revokeObjectURL(currentReceiptUrl);
-  currentReceiptUrl = "";
-  $("#receipt-image").removeAttribute("src");
 });
