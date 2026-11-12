@@ -1,8 +1,15 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "edu-solver",
+  "name": "student-hub",
   "main": "worker.js",
   "compatibility_date": "2026-11-11",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "edu-solver-db",
+      "database_id": "cec643b3-ad09-43b1-8852-c62101b200ba"
+    }
+  ],
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
