@@ -210,7 +210,7 @@ function updatePaymentPrice(order) {
     planBox.hidden = false;
     const plans = [
       { value: "single", title: "المادة المختارة فقط", detail: (order.subject || "المادة") + " — " + price + " جنيه" },
-      { value: "bundle", title: publicSettings.offer.title, detail: "Python + JavaScript + " + (order.type === "لغات" ? "Financial Literacy" : "ثقافة مالية") + " — " + publicSettings.prices.bundle + " جنيه بدلًا من " + publicSettings.prices.bundleOriginal }
+      ...(publicSettings.offer.enabled ? [{ value: "bundle", title: publicSettings.offer.title, detail: "Python + JavaScript + " + (order.type === "لغات" ? "Financial Literacy" : "ثقافة مالية") + " — " + publicSettings.prices.bundle + " جنيه بدلًا من " + publicSettings.prices.bundleOriginal }] : [])
     ];
 
     plans.forEach((plan) => {
