@@ -2,7 +2,7 @@ const form = document.querySelector("#solver-form");
 const result = document.querySelector("#result");
 const subjectFieldset = document.querySelector("#subject-fieldset");
 const subjectOptions = document.querySelector("#subject-options");
-const studentDetails = document.querySelector("#student-details");;
+const studentDetails = document.querySelector("#student-details");
 let publicSettings = { prices: { "JavaScript (QUREO)": 35, JavaScript: 40, Python: 40, "ثقافة مالية": 40, "Financial Literacy": 40, bundle: 100, bundleOriginal: 120 }, offer: { enabled: true, title: "باقة تانية بكالوريا", description: "المواد الثلاثة بدلًا من 120 جنيه", price: 100, originalPrice: 120 }, maintenance: { enabled: false }, announcement: { enabled: false } };
 
 const subjectsBySelection = {
