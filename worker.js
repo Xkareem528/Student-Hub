@@ -176,6 +176,56 @@ function requireStorage(env) {
   return Boolean(env.DB);
 }
 
+
+const DEFAULT_SITE_SETTINGS = {
+  prices: { "JavaScript (QUREO)": 35, JavaScript: 40, Python: 40, "ثقافة مالية": 40, "Financial Literacy": 40, bundle: 100, bundleOriginal: 120 },
+  offer: { enabled: true, title: "باقة تانية بكالوريا", description: "المواد الثلاثة بدلًا من 120 جنيه", price: 100, originalPrice: 120 },
+  maintenance: { enabled: false, message: "الموقع تحت الصيانة مؤقتًا. حاول مرة أخرى لاحقًا." },
+  announcement: { enabled: false, type: "info", message: "" }
+};
+
+async function readSiteSettings(env) {
+  const rows = await env.DB.prepare("SELECT setting_key, setting_value FROM site_settings").all();
+  const settings = structuredClone(DEFAULT_SITE_SETTINGS);
+  for (const row of rows.results || []) {
+    try {
+      const value = JSON.parse(row.setting_value);
+      if (Object.prototype.hasOwnProperty.call(settings, row.setting_key)) settings[row.setting_key] = value;
+    } catch {}
+  }
+  return settings;
+}
+
+async function saveSiteSettings(env, settings) {
+  const statements = Object.entries(settings).map(([key, value]) =>
+    env.DB.prepare("INSERT INTO site_settings (setting_key, setting_value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value, updated_at = CURRENT_TIMESTAMP")
+      .bind(key, JSON.stringify(value))
+  );
+  await env.DB.batch(statements);
+}
+
+function validateSiteSettings(input) {
+  if (!input || typeof input !== "object") return null;
+  const number = value => Number.isInteger(value) && value >= 0 && value <= 100000;
+  const prices = input.prices, offer = input.offer, maintenance = input.maintenance, announcement = input.announcement;
+  if (!prices || !offer || !maintenance || !announcement) return null;
+  for (const key of ["JavaScript (QUREO)", "JavaScript", "Python", "ثقافة مالية", "Financial Literacy", "bundle", "bundleOriginal"]) {
+    if (!number(prices[key])) return null;
+  }
+  if (typeof offer.enabled !== "boolean" || typeof offer.title !== "string" ||
+      typeof offer.description !== "string" || !number(offer.price) || !number(offer.originalPrice) ||
+      typeof maintenance.enabled !== "boolean" || typeof maintenance.message !== "string" ||
+      typeof announcement.enabled !== "boolean" || !["info", "warning"].includes(announcement.type) ||
+      typeof announcement.message !== "string") return null;
+  if (offer.title.length > 100 || offer.description.length > 240 ||
+      maintenance.message.length > 240 || announcement.message.length > 300) return null;
+  return {
+    prices: { ...prices }, offer: { ...offer },
+    maintenance: { enabled: maintenance.enabled, message: maintenance.message.trim() || DEFAULT_SITE_SETTINGS.maintenance.message },
+    announcement: { enabled: announcement.enabled, type: announcement.type, message: announcement.message.trim() }
+  };
+}
+
 const STATUS_LABELS = {
   pending: "في انتظار مراجعة الدفع",
   approved: "تم قبول الدفع",
@@ -354,7 +404,12 @@ async function handleSubmit(request, env) {
   try { data = await request.formData(); }
   catch { return json({ ok: false, message: "بيانات الطلب غير صالحة." }, 400); }
 
-  const siteSettings = await readSiteSettings(env);\n  if (siteSettings.maintenance.enabled) {\n    return json({ ok: false, message: siteSettings.maintenance.message }, 503);\n  }\n\n  const type = data.get("type");
+  const siteSettings = await readSiteSettings(env);
+  if (siteSettings.maintenance.enabled) {
+    return json({ ok: false, message: siteSettings.maintenance.message }, 503);
+  }
+
+  const type = data.get("type");
   const grade = data.get("grade");
   const subject = data.get("subject");
   const phone = data.get("phone");
@@ -377,7 +432,7 @@ async function handleSubmit(request, env) {
 
   if (!allowedTypes.includes(type) || !allowedGrades.includes(grade) ||
       !allowedSubjects[type + "|" + grade]?.includes(subject) ||
-      (bundle && grade !== "تانية بكالوريا")) {
+      (bundle && (grade !== "تانية بكالوريا" || !siteSettings.offer.enabled))) {
     return json({ ok: false, message: "اختيارات الطلب غير صحيحة." }, 400);
   }
   if (consent !== "true") return json({ ok: false, message: "يجب تأكيد صحة البيانات أولًا." }, 400);
