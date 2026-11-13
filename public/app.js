@@ -324,7 +324,37 @@ async function submitPaidOrder() {
     pendingOrder = null;
     updateSelectedCards();
     updateFlow();
-    result.textContent = "تم استلام طلبك وإثبات الدفع بنجاح. جاري مراجعة عملية الدفع والتحويل.";
+    result.replaceChildren(document.createTextNode(
+      data.message || "تم استلام طلبك وإثبات الدفع بنجاح. جاري مراجعة عملية الدفع والتحويل."
+    ));
+    if (data.trackingUrl) {
+      const link = document.createElement("a");
+      link.className = "tracking-result-link";
+      link.href = data.trackingUrl;
+      link.textContent = "افتح رابط متابعة طلبك";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      result.append(document.createElement("br"), link);
+      const copy = document.createElement("button");
+      copy.type = "button";
+      copy.className = "tracking-copy-button";
+      copy.textContent = "نسخ رابط المتابعة";
+      copy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(data.trackingUrl);
+          copy.textContent = "تم نسخ الرابط ✓";
+        } catch {
+          copy.textContent = "افتح الرابط واحفظه";
+        }
+      });
+      result.append(document.createTextNode(" "), copy);
+    }
+    if (data.orderId) {
+      const orderNumber = document.createElement("small");
+      orderNumber.className = "tracking-order-number";
+      orderNumber.textContent = "رقم الطلب: " + data.orderId;
+      result.append(document.createElement("br"), orderNumber);
+    }
     result.classList.remove("error");
     result.scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (error) {
