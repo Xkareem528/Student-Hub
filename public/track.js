@@ -1,10 +1,18 @@
 (() => {
   const API = "https://student-hub.kareemahmedhussein4.workers.dev";
-  const token = window.location.hash.slice(1);
+  const form = document.querySelector("#tracking-form");
+  const orderInput = document.querySelector("#tracking-order-id");
+  const phoneInput = document.querySelector("#tracking-phone");
   const loading = document.querySelector("#tracking-loading");
   const errorBox = document.querySelector("#tracking-error");
   const content = document.querySelector("#tracking-content");
+  const submitButton = document.querySelector("#tracking-submit");
   const refreshButton = document.querySelector("#tracking-refresh");
+  let lastLookup = null;
+
+  const params = new URLSearchParams(window.location.search);
+  const presetOrder = params.get("order");
+  if (presetOrder) orderInput.value = presetOrder;
 
   function showError(message) {
     loading.hidden = true;
@@ -20,18 +28,33 @@
   }
 
   async function loadOrder() {
-    if (!/^[A-Za-z0-9_-]{40,50}$/.test(token)) {
-      showError("رابط المتابعة غير مكتمل. افتح الرابط الذي ظهر لك بعد إرسال الطلب.");
+    const orderId = orderInput.value.trim();
+    const phone = phoneInput.value.trim();
+    if (!/^[a-f0-9-]{36}$/i.test(orderId)) {
+      showError("أدخل رقم الطلب الصحيح.");
+      orderInput.focus();
       return;
     }
+    if (!/^01\\d{9}$/.test(phone)) {
+      showError("أدخل رقم الهاتف المسجل في الطلب المكوّن من 11 رقمًا.");
+      phoneInput.focus();
+      return;
+    }
+
+    lastLookup = { orderId, phone };
+    submitButton.disabled = true;
     refreshButton.disabled = true;
-    refreshButton.textContent = "جاري التحديث...";
+    loading.hidden = false;
+    loading.textContent = "جاري التحقق من بيانات الطلب...";
+    errorBox.hidden = true;
+    content.hidden = true;
+
     try {
       const response = await fetch(API + "/api/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
-        body: JSON.stringify({ token })
+        body: JSON.stringify(lastLookup)
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.ok) throw new Error(data.message || "تعذر تحميل حالة الطلب.");
@@ -44,16 +67,21 @@
       document.querySelector("#order-created").textContent = formatDate(order.createdAt);
       document.querySelector("#order-updated").textContent = formatDate(order.updatedAt);
       loading.hidden = true;
-      errorBox.hidden = true;
       content.hidden = false;
     } catch (error) {
       showError(error.message || "حدث خطأ أثناء تحميل حالة الطلب.");
     } finally {
+      submitButton.disabled = false;
       refreshButton.disabled = false;
-      refreshButton.textContent = "تحديث الحالة ↻";
+      submitButton.textContent = "عرض حالة الطلب";
     }
   }
 
-  refreshButton.addEventListener("click", loadOrder);
-  loadOrder();
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    loadOrder();
+  });
+  refreshButton.addEventListener("click", () => {
+    if (lastLookup) loadOrder();
+  });
 })();
