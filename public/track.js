@@ -35,7 +35,7 @@
       orderInput.focus();
       return;
     }
-    if (!/^01\\d{9}$/.test(phone)) {
+    if (!/^01\d{9}$/.test(phone)) {
       showError("أدخل رقم الهاتف المسجل في الطلب المكوّن من 11 رقمًا.");
       phoneInput.focus();
       return;
