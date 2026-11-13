@@ -211,6 +211,18 @@ async function handleAdmin(request, env) {
     return json({ ok: false, message: "قاعدة بيانات D1 غير مربوطة بالـ Worker بعد." }, 503);
   }
 
+  if (path === "/api/admin/settings" && request.method === "GET") {
+    return json({ ok: true, settings: await readSiteSettings(env) }, 200, { "cache-control": "no-store" });
+  }
+  if (path === "/api/admin/settings" && request.method === "PUT") {
+    let body;
+    try { body = await request.json(); } catch { return json({ ok: false, message: "بيانات الإعدادات غير صالحة." }, 400); }
+    const settings = validateSiteSettings(body.settings);
+    if (!settings) return json({ ok: false, message: "راجع القيم المدخلة؛ بعض الحقول غير صحيحة." }, 400);
+    await saveSiteSettings(env, settings);
+    return json({ ok: true, settings }, 200, { "cache-control": "no-store" });
+  }
+
   if (path === "/api/admin/orders" && request.method === "GET") {
     const status = url.searchParams.get("status") || "";
     const query = (url.searchParams.get("q") || "").trim().slice(0, 80);
@@ -342,7 +354,7 @@ async function handleSubmit(request, env) {
   try { data = await request.formData(); }
   catch { return json({ ok: false, message: "بيانات الطلب غير صالحة." }, 400); }
 
-  const type = data.get("type");
+  const siteSettings = await readSiteSettings(env);\n  if (siteSettings.maintenance.enabled) {\n    return json({ ok: false, message: siteSettings.maintenance.message }, 503);\n  }\n\n  const type = data.get("type");
   const grade = data.get("grade");
   const subject = data.get("subject");
   const phone = data.get("phone");
@@ -386,14 +398,7 @@ async function handleSubmit(request, env) {
     return json({ ok: false, message: "ارفع صورة إيصال صحيحة لا تتجاوز 5 ميجابايت." }, 400);
   }
 
-  const prices = {
-    "JavaScript (QUREO)": 35,
-    "JavaScript": 40,
-    "Python": 40,
-    "ثقافة مالية": 40,
-    "Financial Literacy": 40
-  };
-  const amount = bundle ? 100 : prices[subject];
+  const amount = bundle ? siteSettings.prices.bundle : siteSettings.prices[subject];
   const orderDescription = bundle
     ? "باقة المواد الثلاثة: Python + JavaScript + " + (type === "لغات" ? "Financial Literacy" : "ثقافة مالية")
     : subject;
@@ -456,6 +461,18 @@ async function handleApi(request, env) {
       platform: "Cloudflare Workers",
       adminStorageReady: requireStorage(env)
     });
+  }
+
+  if (url.pathname === "/api/site-settings" && request.method === "GET") {
+    if (!requireStorage(env)) return json({ ok: false, message: "الإعدادات غير متاحة حاليًا." }, 503);
+    const settings = await readSiteSettings(env);
+    return json({
+      ok: true,
+      prices: settings.prices,
+      offer: settings.offer,
+      maintenance: settings.maintenance,
+      announcement: settings.announcement
+    }, 200, { "cache-control": "no-store" });
   }
 
   if (url.pathname === "/api/payment-info" && request.method === "GET") {
