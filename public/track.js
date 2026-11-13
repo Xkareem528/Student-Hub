@@ -14,6 +14,17 @@
   const presetOrder = params.get("order");
   if (presetOrder) orderInput.value = presetOrder;
 
+  function normalizeEgyptPhone(value) {
+    let phone = String(value || "").trim()
+      .replace(/[٠-٩]/g, digit => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+      .replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+      .replace(/[\\s().-]/g, "");
+    if (phone.startsWith("+20")) phone = "0" + phone.slice(3);
+    else if (phone.startsWith("0020")) phone = "0" + phone.slice(4);
+    else if (phone.startsWith("20") && phone.length === 12) phone = "0" + phone.slice(2);
+    return /^01\\d{9}$/.test(phone) ? phone : "";
+  }
+
   function showError(message) {
     loading.hidden = true;
     content.hidden = true;
@@ -29,18 +40,19 @@
 
   async function loadOrder() {
     const orderId = orderInput.value.trim();
-    const phone = phoneInput.value.trim();
+    const phone = normalizeEgyptPhone(phoneInput.value);
     if (!/^[a-f0-9-]{36}$/i.test(orderId)) {
       showError("أدخل رقم الطلب الصحيح.");
       orderInput.focus();
       return;
     }
-    if (!/^01\d{9}$/.test(phone)) {
-      showError("أدخل رقم الهاتف المسجل في الطلب المكوّن من 11 رقمًا.");
+    if (!phone) {
+      showError("أدخل رقم هاتف مصري صحيحًا، مثل 01012345678.");
       phoneInput.focus();
       return;
     }
 
+    phoneInput.value = phone;
     lastLookup = { orderId, phone };
     submitButton.disabled = true;
     refreshButton.disabled = true;
