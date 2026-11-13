@@ -218,6 +218,7 @@ $("#login-form").addEventListener("submit", async (event) => {
     $("#dashboard").hidden = false;
     $("#logout").hidden = false;
     await loadOrders();
+    await loadSettings();
   } catch (error) {
     showMessage($("#login-message"), error.message, true);
   } finally {
