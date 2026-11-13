@@ -271,11 +271,11 @@ function normalizeEgyptPhone(value) {
   let phone = String(value).trim()
     .replace(/[٠-٩]/g, digit => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
     .replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
-    .replace(/[\\s().-]/g, "");
+    .replace(/[\s().-]/g, "");
   if (phone.startsWith("+20")) phone = "0" + phone.slice(3);
   else if (phone.startsWith("0020")) phone = "0" + phone.slice(4);
   else if (phone.startsWith("20") && phone.length === 12) phone = "0" + phone.slice(2);
-  return /^01\\d{9}$/.test(phone) ? phone : "";
+  return /^01\d{9}$/.test(phone) ? phone : "";
 }
 
 async function handleTrack(request, env) {
