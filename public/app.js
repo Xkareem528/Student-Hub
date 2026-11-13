@@ -2,7 +2,7 @@ const form = document.querySelector("#solver-form");
 const result = document.querySelector("#result");
 const subjectFieldset = document.querySelector("#subject-fieldset");
 const subjectOptions = document.querySelector("#subject-options");
-const studentDetails = document.querySelector("#student-details");
+const studentDetails = document.querySelector("#student-details");\nlet publicSettings = { prices: { "JavaScript (QUREO)": 35, JavaScript: 40, Python: 40, "ثقافة مالية": 40, "Financial Literacy": 40, bundle: 100, bundleOriginal: 120 }, offer: { enabled: true, title: "باقة تانية بكالوريا", description: "المواد الثلاثة بدلًا من 120 جنيه", price: 100, originalPrice: 120 }, maintenance: { enabled: false }, announcement: { enabled: false } };
 
 const subjectsBySelection = {
   "حكومي|أولى بكالوريا": [
@@ -203,21 +203,14 @@ function updatePaymentPrice(order) {
   priceBox.replaceChildren();
   planBox.replaceChildren();
 
-  const prices = {
-    "JavaScript (QUREO)": 35,
-    "JavaScript": 40,
-    "Python": 40,
-    "ثقافة مالية": 40,
-    "Financial Literacy": 40
-  };
-  const price = prices[order.subject];
+  const price = publicSettings.prices[order.subject];
   const isSecondYear = order.grade === "تانية بكالوريا";
 
   if (isSecondYear) {
     planBox.hidden = false;
     const plans = [
       { value: "single", title: "المادة المختارة فقط", detail: (order.subject || "المادة") + " — " + price + " جنيه" },
-      { value: "bundle", title: "باقة المواد الثلاثة", detail: "Python + JavaScript + " + (order.type === "لغات" ? "Financial Literacy" : "ثقافة مالية") + " — 100 جنيه بدلًا من 120" }
+      { value: "bundle", title: publicSettings.offer.title, detail: "Python + JavaScript + " + (order.type === "لغات" ? "Financial Literacy" : "ثقافة مالية") + " — " + publicSettings.prices.bundle + " جنيه بدلًا من " + publicSettings.prices.bundleOriginal }
     ];
 
     plans.forEach((plan) => {
@@ -253,14 +246,14 @@ function updatePaymentPrice(order) {
   const selected = document.createElement("div");
   selected.className = "payment-price-line";
   selected.textContent = order.bundle
-    ? "باقة المواد الثلاثة — 100 جنيه"
+    ? publicSettings.offer.title + " — " + publicSettings.prices.bundle + " جنيه"
     : order.subject + " — " + (price ?? "غير محدد") + " جنيه";
   priceBox.append(title, selected);
 
   if (order.bundle) {
     const saving = document.createElement("div");
     saving.className = "payment-price-saving";
-    saving.textContent = "وفّرت 20 جنيه — السعر الأصلي 120 جنيه";
+    saving.textContent = "وفّرت " + (publicSettings.prices.bundleOriginal - publicSettings.prices.bundle) + " جنيه — السعر الأصلي " + publicSettings.prices.bundleOriginal + " جنيه";
     priceBox.appendChild(saving);
   }
 }
