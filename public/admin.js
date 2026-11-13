@@ -118,6 +118,78 @@ async function loadOrders() {
   data.orders.forEach(order => container.append(renderOrder(order)));
 }
 
+
+function fillSettings(settings) {
+  const form = $("#site-settings-form");
+  if (!form) return;
+  form.elements["price-q"].value = settings.prices["JavaScript (QUREO)"];
+  form.elements["price-single"].value = settings.prices.JavaScript;
+  form.elements["price-bundle"].value = settings.prices.bundle;
+  form.elements["price-original"].value = settings.prices.bundleOriginal;
+  form.elements["offer-enabled"].checked = settings.offer.enabled;
+  form.elements["offer-title"].value = settings.offer.title;
+  form.elements["offer-description"].value = settings.offer.description;
+  form.elements["maintenance-enabled"].checked = settings.maintenance.enabled;
+  form.elements["maintenance-message"].value = settings.maintenance.message;
+  form.elements["announcement-enabled"].checked = settings.announcement.enabled;
+  form.elements["announcement-type"].value = settings.announcement.type;
+  form.elements["announcement-message"].value = settings.announcement.message;
+}
+
+async function loadSettings() {
+  const data = await api("/api/admin/settings");
+  fillSettings(data.settings);
+}
+
+$("#site-settings-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = form.querySelector('button[type="submit"]');
+  const value = name => form.elements[name].value;
+  const settings = {
+    prices: {
+      "JavaScript (QUREO)": Number(value("price-q")),
+      JavaScript: Number(value("price-single")),
+      Python: Number(value("price-single")),
+      "ثقافة مالية": Number(value("price-single")),
+      "Financial Literacy": Number(value("price-single")),
+      bundle: Number(value("price-bundle")),
+      bundleOriginal: Number(value("price-original"))
+    },
+    offer: {
+      enabled: form.elements["offer-enabled"].checked,
+      title: value("offer-title").trim(),
+      description: value("offer-description").trim(),
+      price: Number(value("price-bundle")),
+      originalPrice: Number(value("price-original"))
+    },
+    maintenance: {
+      enabled: form.elements["maintenance-enabled"].checked,
+      message: value("maintenance-message").trim()
+    },
+    announcement: {
+      enabled: form.elements["announcement-enabled"].checked,
+      type: value("announcement-type"),
+      message: value("announcement-message").trim()
+    }
+  };
+  button.disabled = true;
+  showMessage($("#settings-message"), "جاري حفظ الإعدادات...");
+  try {
+    const data = await api("/api/admin/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ settings })
+    });
+    fillSettings(data.settings);
+    showMessage($("#settings-message"), "تم حفظ الإعدادات بنجاح.");
+  } catch (error) {
+    showMessage($("#settings-message"), error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
 async function refresh() {
   try {
     await loadOrders();
