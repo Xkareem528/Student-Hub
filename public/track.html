@@ -17,7 +17,16 @@
       <div class="tracking-eyebrow">ORDER TRACKING</div>
       <h1>متابعة طلبك</h1>
       <p class="tracking-intro">تابع حالة طلبك وتحديثاته بدون إنشاء حساب أو تسجيل دخول.</p>
-      <div id="tracking-loading" class="tracking-message" role="status">جاري تحميل بيانات الطلب...</div>
+      <form id="tracking-form" class="tracking-form">
+        <label class="tracking-field">رقم الطلب
+          <input id="tracking-order-id" name="orderId" type="text" inputmode="text" autocomplete="off" placeholder="أدخل رقم الطلب" required>
+        </label>
+        <label class="tracking-field">رقم الهاتف المسجل في الطلب
+          <input id="tracking-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="11" placeholder="01xxxxxxxxx" required>
+        </label>
+        <button id="tracking-submit" class="tracking-refresh" type="submit">عرض حالة الطلب</button>
+      </form>
+      <div id="tracking-loading" class="tracking-message" role="status" hidden>جاري تحميل بيانات الطلب...</div>
       <div id="tracking-error" class="tracking-message tracking-error" role="alert" hidden></div>
       <div id="tracking-content" hidden>
         <div class="tracking-status">
@@ -33,7 +42,7 @@
           <div><span>آخر تحديث</span><b id="order-updated">—</b></div>
         </div>
         <button id="tracking-refresh" class="tracking-refresh" type="button">تحديث الحالة ↻</button>
-        <p class="tracking-note">احتفظ بهذا الرابط؛ فهو المفتاح الخاص لمتابعة طلبك. لا تشاركه مع أي شخص.</p>
+        <p class="tracking-note">للحفاظ على خصوصية بيانات الطلب، يلزم إدخال رقم الطلب ورقم الهاتف المسجل معه.</p>
       </div>
       <a class="tracking-home" href="/">العودة إلى EDU SOLVER</a>
     </section>
