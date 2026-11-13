@@ -61,6 +61,35 @@
         <p id="dashboard-message" class="message" role="status"></p>
         <div id="orders" class="orders-list"></div>
       </section>
+      <section class="card settings-card" id="site-settings-card">
+        <div class="orders-heading"><div><div class="eyebrow">SITE CONTROL</div><h2>إعدادات الموقع</h2></div><span class="muted">تحكم مباشر في تجربة الطلاب</span></div>
+        <form id="site-settings-form">
+          <div class="settings-grid">
+            <label>سعر JavaScript أولى بكالوريا<input name="price-q" type="number" min="0" max="100000" required></label>
+            <label>سعر المادة الواحدة تانية بكالوريا<input name="price-single" type="number" min="0" max="100000" required></label>
+            <label>سعر باقة المواد الثلاثة<input name="price-bundle" type="number" min="0" max="100000" required></label>
+            <label>السعر الأصلي للباقة<input name="price-original" type="number" min="0" max="100000" required></label>
+          </div>
+          <div class="settings-subsection">
+            <h3>العرض الحالي</h3>
+            <label class="settings-check"><input name="offer-enabled" type="checkbox"> تفعيل عرض الباقة</label>
+            <label>عنوان العرض<input name="offer-title" maxlength="100" required></label>
+            <label>وصف العرض<input name="offer-description" maxlength="240" required></label>
+          </div>
+          <div class="settings-subsection">
+            <h3>وضع الصيانة</h3>
+            <label class="settings-check"><input name="maintenance-enabled" type="checkbox"> تفعيل وضع الصيانة وإيقاف استقبال الطلبات</label>
+            <label>رسالة الصيانة<textarea name="maintenance-message" maxlength="240" rows="2" required></textarea></label>
+          </div>
+          <div class="settings-subsection">
+            <h3>رسالة للطلاب</h3>
+            <label class="settings-check"><input name="announcement-enabled" type="checkbox"> إظهار رسالة الموقع</label>
+            <label>نوع الرسالة<select name="announcement-type"><option value="info">معلومة</option><option value="warning">تنبيه</option></select></label>
+            <label>نص الرسالة<textarea name="announcement-message" maxlength="300" rows="2"></textarea></label>
+          </div>
+          <div class="settings-actions"><button class="primary" type="submit">حفظ الإعدادات</button><span id="settings-message" class="message" role="status"></span></div>
+        </form>
+      </section>
       <p class="footnote">تُعرض أحدث 200 طلب. بيانات الدخول وكلمات مرور الطلاب لا تظهر في لوحة الإدارة.</p>
     </section>
   </main>
