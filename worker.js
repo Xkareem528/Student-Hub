@@ -283,7 +283,7 @@ async function handleTrack(request, env) {
 
   const orderId = typeof body.orderId === "string" ? body.orderId.trim() : "";
   const phone = typeof body.phone === "string" ? body.phone.trim() : "";
-  if (!/^[a-f0-9-]{36}$/i.test(orderId) || !/^01\\d{9}$/.test(phone)) {
+  if (!/^[a-f0-9-]{36}$/i.test(orderId) || !/^01\d{9}$/.test(phone)) {
     return json({ ok: false, message: "تأكد من كتابة رقم الطلب ورقم الهاتف بشكل صحيح." }, 400);
   }
 
