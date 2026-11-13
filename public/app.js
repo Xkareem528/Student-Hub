@@ -324,7 +324,20 @@ async function submitPaidOrder() {
     pendingOrder = null;
     updateSelectedCards();
     updateFlow();
-    result.textContent = "تم استلام طلبك وإثبات الدفع بنجاح. جاري مراجعة عملية الدفع والتحويل.";
+    result.replaceChildren(document.createTextNode(
+      data.message || "تم استلام طلبك وإثبات الدفع بنجاح. جاري مراجعة عملية الدفع والتحويل."
+    ));
+    if (data.orderId) {
+      const link = document.createElement("a");
+      link.className = "tracking-result-link";
+      link.href = "/track.html?order=" + encodeURIComponent(data.orderId);
+      link.textContent = "متابعة طلبي";
+      result.append(document.createElement("br"), link);
+      const orderNumber = document.createElement("small");
+      orderNumber.className = "tracking-order-number";
+      orderNumber.textContent = "رقم الطلب: " + data.orderId;
+      result.append(document.createElement("br"), orderNumber);
+    }
     result.classList.remove("error");
     result.scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (error) {

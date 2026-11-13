@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090817">
+  <meta name="description" content="متابعة حالة طلبك في EDU SOLVER">
+  <title>متابعة الطلب | EDU SOLVER</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/track.css">
+  <script src="/track.js" defer></script>
+</head>
+<body class="tracking-page">
+  <main class="tracking-shell">
+    <a class="tracking-brand" href="/">EDU <b>SOLVER</b></a>
+    <section class="tracking-card">
+      <div class="tracking-eyebrow">ORDER TRACKING</div>
+      <h1>متابعة طلبك</h1>
+      <p class="tracking-intro">تابع حالة طلبك وتحديثاته بدون إنشاء حساب أو تسجيل دخول.</p>
+      <form id="tracking-form" class="tracking-form">
+        <label class="tracking-field">رقم الطلب
+          <input id="tracking-order-id" name="orderId" type="text" inputmode="text" autocomplete="off" placeholder="أدخل رقم الطلب" required>
+        </label>
+        <label class="tracking-field">رقم الهاتف المسجل في الطلب
+          <input id="tracking-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="11" placeholder="01xxxxxxxxx" required>
+        </label>
+        <button id="tracking-submit" class="tracking-refresh" type="submit">عرض حالة الطلب</button>
+      </form>
+      <div id="tracking-loading" class="tracking-message" role="status" hidden>جاري تحميل بيانات الطلب...</div>
+      <div id="tracking-error" class="tracking-message tracking-error" role="alert" hidden></div>
+      <div id="tracking-content" hidden>
+        <div class="tracking-status">
+          <span class="tracking-status-dot"></span>
+          <div><small>الحالة الحالية</small><strong id="status-label">—</strong></div>
+        </div>
+        <div class="tracking-details">
+          <div><span>رقم الطلب</span><b id="order-id">—</b></div>
+          <div><span>الصف الدراسي</span><b id="order-grade">—</b></div>
+          <div><span>المادة / الباقة</span><b id="order-subject">—</b></div>
+          <div><span>المبلغ</span><b id="order-amount">—</b></div>
+          <div><span>تاريخ الطلب</span><b id="order-created">—</b></div>
+          <div><span>آخر تحديث</span><b id="order-updated">—</b></div>
+        </div>
+        <button id="tracking-refresh" class="tracking-refresh" type="button">تحديث الحالة ↻</button>
+        <p class="tracking-note">للحفاظ على خصوصية بيانات الطلب، يلزم إدخال رقم الطلب ورقم الهاتف المسجل معه.</p>
+      </div>
+      <a class="tracking-home" href="/">العودة إلى EDU SOLVER</a>
+    </section>
+    <footer>© EDU SOLVER</footer>
+  </main>
+</body>
+</html>

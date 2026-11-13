@@ -1,5 +1,6 @@
 const recentRequests = new Map();
 const loginAttempts = new Map();
+const trackAttempts = new Map();
 
 const json = (data, status = 200, headers = {}) =>
   new Response(JSON.stringify(data), {
@@ -32,6 +33,24 @@ function loginRateLimited(request) {
   record.count += 1;
   loginAttempts.set(ip, record);
   return record.count > 5;
+}
+
+function trackRateLimited(request) {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const now = Date.now();
+  const record = trackAttempts.get(ip) || { count: 0, start: now };
+  if (now - record.start > 60000) {
+    trackAttempts.set(ip, { count: 1, start: now });
+    return false;
+  }
+  record.count += 1;
+  trackAttempts.set(ip, record);
+  if (trackAttempts.size > 1000) {
+    for (const [key, value] of trackAttempts) {
+      if (now - value.start > 60000) trackAttempts.delete(key);
+    }
+  }
+  return record.count > 20;
 }
 
 async function telegramPhoto(env, photo, caption) {
@@ -247,6 +266,49 @@ async function handleAdmin(request, env) {
   return json({ ok: false, message: "المسار غير موجود." }, 404);
 }
 
+async function handleTrack(request, env) {
+  if (request.method !== "POST") {
+    return json({ ok: false, message: "طريقة الطلب غير مدعومة." }, 405);
+  }
+  if (trackRateLimited(request)) {
+    return json({ ok: false, message: "محاولات كثيرة. انتظر دقيقة ثم حاول مرة أخرى." }, 429);
+  }
+  if (!requireStorage(env)) {
+    return json({ ok: false, message: "خدمة المتابعة غير متاحة حاليًا." }, 503);
+  }
+
+  let body;
+  try { body = await request.json(); }
+  catch { return json({ ok: false, message: "أدخل رقم الطلب ورقم الهاتف." }, 400); }
+
+  const orderId = typeof body.orderId === "string" ? body.orderId.trim() : "";
+  const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+  if (!/^[a-f0-9-]{36}$/i.test(orderId) || !/^01\d{9}$/.test(phone)) {
+    return json({ ok: false, message: "تأكد من كتابة رقم الطلب ورقم الهاتف بشكل صحيح." }, 400);
+  }
+
+  const order = await env.DB.prepare(
+    "SELECT id, created_at, updated_at, subject, grade, amount, status FROM orders WHERE id = ? AND phone = ? LIMIT 1"
+  ).bind(orderId, phone).first();
+
+  if (!order) {
+    return json({ ok: false, message: "لم نعثر على طلب مطابق. راجع رقم الطلب ورقم الهاتف." }, 404);
+  }
+
+  return json({
+    ok: true,
+    order: {
+      id: order.id,
+      createdAt: order.created_at,
+      updatedAt: order.updated_at,
+      subject: order.subject,
+      grade: order.grade,
+      amount: order.amount,
+      status: order.status,
+      statusLabel: STATUS_LABELS[order.status] || "قيد المراجعة"
+    }
+  }, 200, { "cache-control": "no-store, private" });
+}
 async function handleSubmit(request, env) {
   if (request.method !== "POST") return json({ ok: false, message: "طريقة الطلب غير مدعومة." }, 405);
   if (isRateLimited(request)) return json({ ok: false, message: "انتظر قليلًا قبل المحاولة مرة أخرى." }, 429);
@@ -391,6 +453,7 @@ async function handleApi(request, env) {
 
   if (url.pathname.startsWith("/api/admin/")) return handleAdmin(request, env);
   if (url.pathname === "/api/submit") return handleSubmit(request, env);
+  if (url.pathname === "/api/track") return handleTrack(request, env);
   return json({ ok: false, message: "المسار غير موجود." }, 404);
 }
 
