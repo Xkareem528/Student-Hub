@@ -86,6 +86,41 @@ form.querySelectorAll('input[name="type"], input[name="grade"]').forEach((input)
 
 updateFlow();
 
+async function loadPublicSettings() {
+  try {
+    const response = await fetch("https://student-hub.kareemahmedhussein4.workers.dev/api/site-settings", { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok || !data.ok) return;
+    publicSettings = data;
+    const cards = document.querySelectorAll(".price-card");
+    const prices = document.querySelectorAll(".price-card strong");
+    if (prices[0]) prices[0].textContent = data.prices["JavaScript (QUREO)"] + " جنيه";
+    if (prices[1]) prices[1].textContent = data.prices.JavaScript + " جنيه";
+    if (prices[2]) prices[2].textContent = data.prices.bundle + " جنيه";
+    if (cards[2]) {
+      cards[2].hidden = !data.offer.enabled;
+      if (data.offer.enabled) {
+        cards[2].querySelector("span").textContent = data.offer.title;
+        cards[2].querySelector("small").textContent = data.offer.description;
+      }
+    }
+    const banner = document.querySelector("#site-announcement");
+    if (banner && (data.maintenance.enabled || data.announcement.enabled)) {
+      banner.hidden = false;
+      banner.textContent = data.maintenance.enabled ? data.maintenance.message : data.announcement.message;
+      banner.classList.toggle("warning", data.maintenance.enabled || data.announcement.type === "warning");
+    }
+    if (data.maintenance.enabled) {
+      document.querySelectorAll(".submit-button").forEach(button => {
+        button.disabled = true;
+        const label = button.querySelector("span");
+        if (label) label.textContent = "الموقع تحت الصيانة";
+      });
+    }
+  } catch {}
+}
+loadPublicSettings();
+
 const submitButton = form.querySelector(".submit-button");
 let pendingOrder = null;
 
