@@ -266,6 +266,18 @@ async function handleAdmin(request, env) {
   return json({ ok: false, message: "المسار غير موجود." }, 404);
 }
 
+function normalizeEgyptPhone(value) {
+  if (typeof value !== "string" && typeof value !== "number") return "";
+  let phone = String(value).trim()
+    .replace(/[٠-٩]/g, digit => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+    .replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[\\s().-]/g, "");
+  if (phone.startsWith("+20")) phone = "0" + phone.slice(3);
+  else if (phone.startsWith("0020")) phone = "0" + phone.slice(4);
+  else if (phone.startsWith("20") && phone.length === 12) phone = "0" + phone.slice(2);
+  return /^01\\d{9}$/.test(phone) ? phone : "";
+}
+
 async function handleTrack(request, env) {
   if (request.method !== "POST") {
     return json({ ok: false, message: "طريقة الطلب غير مدعومة." }, 405);
@@ -282,14 +294,18 @@ async function handleTrack(request, env) {
   catch { return json({ ok: false, message: "أدخل رقم الطلب ورقم الهاتف." }, 400); }
 
   const orderId = typeof body.orderId === "string" ? body.orderId.trim() : "";
-  const phone = typeof body.phone === "string" ? body.phone.trim() : "";
-  if (!/^[a-f0-9-]{36}$/i.test(orderId) || !/^01\d{9}$/.test(phone)) {
+  const phone = normalizeEgyptPhone(body.phone);
+  if (!/^[a-f0-9-]{36}$/i.test(orderId) || !phone) {
     return json({ ok: false, message: "تأكد من كتابة رقم الطلب ورقم الهاتف بشكل صحيح." }, 400);
   }
 
   const order = await env.DB.prepare(
-    "SELECT id, created_at, updated_at, subject, grade, amount, status FROM orders WHERE id = ? AND phone = ? LIMIT 1"
-  ).bind(orderId, phone).first();
+    "SELECT id, phone, created_at, updated_at, subject, grade, amount, status FROM orders WHERE id = ? LIMIT 1"
+  ).bind(orderId).first();
+
+  if (order && normalizeEgyptPhone(order.phone) !== phone) {
+    return json({ ok: false, message: "لم نعثر على طلب مطابق. راجع رقم الطلب ورقم الهاتف." }, 404);
+  }
 
   if (!order) {
     return json({ ok: false, message: "لم نعثر على طلب مطابق. راجع رقم الطلب ورقم الهاتف." }, 404);
