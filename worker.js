@@ -1,5 +1,6 @@
 const recentRequests = new Map();
 const loginAttempts = new Map();
+const trackAttempts = new Map();
 
 const json = (data, status = 200, headers = {}) =>
   new Response(JSON.stringify(data), {
@@ -32,6 +33,24 @@ function loginRateLimited(request) {
   record.count += 1;
   loginAttempts.set(ip, record);
   return record.count > 5;
+}
+
+function trackRateLimited(request) {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const now = Date.now();
+  const record = trackAttempts.get(ip) || { count: 0, start: now };
+  if (now - record.start > 60000) {
+    trackAttempts.set(ip, { count: 1, start: now });
+    return false;
+  }
+  record.count += 1;
+  trackAttempts.set(ip, record);
+  if (trackAttempts.size > 1000) {
+    for (const [key, value] of trackAttempts) {
+      if (now - value.start > 60000) trackAttempts.delete(key);
+    }
+  }
+  return record.count > 20;
 }
 
 async function telegramPhoto(env, photo, caption) {
@@ -247,6 +266,48 @@ async function handleAdmin(request, env) {
   return json({ ok: false, message: "المسار غير موجود." }, 404);
 }
 
+async function handleTrack(request, env) {
+  if (request.method !== "POST") {
+    return json({ ok: false, message: "طريقة الطلب غير مدعومة." }, 405);
+  }
+  if (trackRateLimited(request)) {
+    return json({ ok: false, message: "محاولات كثيرة. انتظر دقيقة ثم حاول مرة أخرى." }, 429);
+  }
+  if (!requireStorage(env)) {
+    return json({ ok: false, message: "خدمة المتابعة غير متاحة حاليًا." }, 503);
+  }
+
+  let body;
+  try { body = await request.json(); }
+  catch { return json({ ok: false, message: "رابط المتابعة غير صالح." }, 400); }
+  const token = typeof body.token === "string" ? body.token : "";
+  if (!/^[A-Za-z0-9_-]{40,50}$/.test(token)) {
+    return json({ ok: false, message: "رابط المتابعة غير صالح أو منتهي." }, 404);
+  }
+
+  const tokenHash = base64url(await digest(token));
+  const order = await env.DB.prepare(
+    "SELECT id, created_at, updated_at, subject, grade, amount, status FROM orders WHERE tracking_token_hash = ? LIMIT 1"
+  ).bind(tokenHash).first();
+  if (!order) {
+    return json({ ok: false, message: "رابط المتابعة غير صالح أو غير موجود." }, 404);
+  }
+
+  return json({
+    ok: true,
+    order: {
+      id: order.id,
+      createdAt: order.created_at,
+      updatedAt: order.updated_at,
+      subject: order.subject,
+      grade: order.grade,
+      amount: order.amount,
+      status: order.status,
+      statusLabel: STATUS_LABELS[order.status] || "قيد المراجعة"
+    }
+  }, 200, { "cache-control": "no-store, private" });
+}
+
 async function handleSubmit(request, env) {
   if (request.method !== "POST") return json({ ok: false, message: "طريقة الطلب غير مدعومة." }, 405);
   if (isRateLimited(request)) return json({ ok: false, message: "انتظر قليلًا قبل المحاولة مرة أخرى." }, 429);
@@ -320,6 +381,8 @@ async function handleSubmit(request, env) {
     : subject;
 
   const id = crypto.randomUUID();
+  const trackingToken = base64url(crypto.getRandomValues(new Uint8Array(32)));
+  const trackingTokenHash = base64url(await digest(trackingToken));
   const caption = [
     "طلب جديد من EDU SOLVER — إثبات دفع",
     "رقم الطلب: " + id,
@@ -337,10 +400,10 @@ async function handleSubmit(request, env) {
 
   try {
     await env.DB.prepare(
-      "INSERT INTO orders (id, type, grade, subject, bundle, amount, phone, student_code, payment_method, sender_phone, receipt_type, receipt_size, status, telegram_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending')"
+      "INSERT INTO orders (id, type, grade, subject, bundle, amount, phone, student_code, payment_method, sender_phone, receipt_type, receipt_size, status, telegram_status, tracking_token_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', ?)"
     ).bind(
       id, type, grade, subject, bundle ? 1 : 0, amount, phone, studentCode,
-      paymentMethod, senderPhone, receipt.type, receipt.size
+      paymentMethod, senderPhone, receipt.type, receipt.size, trackingTokenHash
     ).run();
   } catch (error) {
     console.error("Order storage error:", error.message);
@@ -363,6 +426,7 @@ async function handleSubmit(request, env) {
       ? "تم استلام طلبك وإثبات الدفع بنجاح. جاري مراجعة عملية الدفع والتحويل."
       : "تم حفظ طلبك بنجاح، لكن تعذر إرسال إشعار Telegram للإدارة. سيتم مراجعته من لوحة الإدارة.",
     orderId: id,
+    trackingUrl: ALLOWED_ORIGIN + "/track.html#" + trackingToken,
     telegramSent
   });
 }
@@ -391,6 +455,7 @@ async function handleApi(request, env) {
 
   if (url.pathname.startsWith("/api/admin/")) return handleAdmin(request, env);
   if (url.pathname === "/api/submit") return handleSubmit(request, env);
+  if (url.pathname === "/api/track") return handleTrack(request, env);
   return json({ ok: false, message: "المسار غير موجود." }, 404);
 }
 
