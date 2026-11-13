@@ -21,3 +21,10 @@
 .tracking-home{display:inline-block;margin-top:20px;color:#72e4e0;text-decoration:none;font-size:12px}
 .tracking-shell footer{text-align:center;color:#77718e;font-size:10px;padding:22px}
 @media(max-width:480px){.tracking-details{grid-template-columns:1fr 1fr}.tracking-details>div{padding:12px 10px}}
+
+.tracking-form{display:grid;gap:13px;margin:0 0 18px}
+.tracking-field{display:grid;gap:7px;color:#d9d4e8;font-size:12px;font-weight:800}
+.tracking-field input{width:100%;height:49px;padding:0 13px;border:1px solid #393451;border-radius:12px;background:#0d0c1c;color:#fff;font:inherit;outline:none}
+.tracking-field input:focus{border-color:#72e4e0;box-shadow:0 0 0 3px #72e4e01c}
+.tracking-form .tracking-refresh{margin-top:3px}
+.tracking-content[hidden],#tracking-content[hidden]{display:none}
