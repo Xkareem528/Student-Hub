@@ -13,9 +13,8 @@
   const steps = [...journey.querySelectorAll(".journey-step")];
   const subjectField = document.querySelector("#subject-fieldset");
   const studentDetails = document.querySelector("#student-details");
-  const paymentStep = document.querySelector("#payment-step");
-
   function updateJourney() {
+    const paymentStep = document.querySelector("#payment-step");
     const paymentVisible = paymentStep && !paymentStep.hidden;
     const detailsVisible = studentDetails && !studentDetails.hidden;
     const subjectChosen = Boolean(form.querySelector('input[name="subject"]:checked'));
