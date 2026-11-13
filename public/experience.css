@@ -1,0 +1,29 @@
+
+/* Student journey and pricing experience */
+.journey-wrap{max-width:760px;margin:0 auto 18px}
+.journey{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;position:relative}
+.journey-step{display:flex;align-items:center;gap:9px;padding:12px;border:1px solid #ffffff16;border-radius:14px;background:#ffffff06;color:#8f8aa8;transition:.25s}
+.journey-step .journey-number{width:27px;height:27px;display:grid;place-items:center;border-radius:9px;background:#ffffff0c;font-size:11px;font-weight:900}
+.journey-step b{font-size:11px}.journey-step small{display:block;font-size:9px;margin-top:3px;color:#827c96}
+.journey-step.active{border-color:#8f7be0;background:linear-gradient(120deg,#302451aa,#102a39aa);color:#fff;box-shadow:0 8px 25px #7f6bdb18}
+.journey-step.active .journey-number,.journey-step.done .journey-number{background:linear-gradient(130deg,#b49aff,#72e4e0);color:#100e20}
+.journey-step.done{border-color:#48c9b455;color:#b8f5e4}
+.pricing-section{max-width:760px;margin:0 auto 24px}
+.section-kicker{color:var(--cyan);font-size:10px;font-weight:900;letter-spacing:1.8px;text-align:center}
+.pricing-title{text-align:center;font-size:21px;margin:7px 0 15px}
+.price-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.price-card{position:relative;overflow:hidden;padding:15px;border:1px solid #ffffff17;border-radius:16px;background:linear-gradient(145deg,#17152d,#0e1729);text-align:center;transition:transform .22s,border-color .22s}
+.price-card:hover{transform:translateY(-4px);border-color:#8d83d9}
+.price-card.featured{border-color:#62c8d7aa;background:linear-gradient(145deg,#25204a,#102c3b)}
+.price-card span{display:block;color:#aaa4c0;font-size:10px}
+.price-card strong{display:block;margin:7px 0 2px;font-size:25px;color:#bcaaff}
+.price-card.featured strong{color:#72e4e0}
+.price-card small{font-size:9px;color:#8f89a8}
+.price-note{text-align:center;color:#817b98;font-size:10px;margin:10px 0 0}
+.flow-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0;padding:13px;border:1px solid #8c7be044;border-radius:14px;background:#17152b}
+.flow-summary div{min-width:0}.flow-summary span{display:block;color:#9b94b5;font-size:9px;margin-bottom:4px}.flow-summary b{display:block;font-size:11px;overflow-wrap:anywhere}
+#student-details{animation:journey-reveal .35s ease both}
+@keyframes journey-reveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+:focus-visible{outline:2px solid #72e4e0!important;outline-offset:3px}
+@media(max-width:600px){.journey{gap:5px}.journey-step{padding:9px 6px;gap:6px;flex-direction:column;text-align:center}.journey-step b{font-size:9px}.journey-step small{font-size:8px}.journey-step .journey-number{width:24px;height:24px}.price-grid{grid-template-columns:1fr 1fr}.price-card:last-child{grid-column:1/-1}.pricing-title{font-size:18px}.flow-summary{grid-template-columns:1fr 1fr}.flow-summary div:last-child{grid-column:1/-1}}
+@media(prefers-reduced-motion:reduce){.journey-step,.price-card{transition:none}#student-details{animation:none}}
