@@ -870,3 +870,5 @@ fieldset{margin-bottom:25px}legend{color:#dce9ff}
 
 .tracking-result-link{display:inline-flex;align-items:center;justify-content:center;margin:12px 0 5px;padding:11px 18px;border-radius:12px;background:linear-gradient(100deg,#087dff,#18a7ff 55%,#7358ff);color:#fff!important;text-decoration:none;font-weight:900;box-shadow:0 8px 24px #087dff33}
 .tracking-order-number{display:inline-block;margin-top:10px;color:#aaa5bd;font-size:11px;direction:ltr;unicode-bidi:plaintext}
+
+.site-announcement{margin:20px auto;padding:15px 18px;border:1px solid #238bd5;border-radius:14px;background:#0b2c4b;color:#dff3ff;font-weight:700;font-size:13px;line-height:1.8}.site-announcement.warning{border-color:#c68a36;background:#493015;color:#fff0cf}

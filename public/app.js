@@ -2,7 +2,7 @@ const form = document.querySelector("#solver-form");
 const result = document.querySelector("#result");
 const subjectFieldset = document.querySelector("#subject-fieldset");
 const subjectOptions = document.querySelector("#subject-options");
-const studentDetails = document.querySelector("#student-details");
+const studentDetails = document.querySelector("#student-details");\nlet publicSettings = { prices: { "JavaScript (QUREO)": 35, JavaScript: 40, Python: 40, "ثقافة مالية": 40, "Financial Literacy": 40, bundle: 100, bundleOriginal: 120 }, offer: { enabled: true, title: "باقة تانية بكالوريا", description: "المواد الثلاثة بدلًا من 120 جنيه", price: 100, originalPrice: 120 }, maintenance: { enabled: false }, announcement: { enabled: false } };
 
 const subjectsBySelection = {
   "حكومي|أولى بكالوريا": [
@@ -85,6 +85,41 @@ form.querySelectorAll('input[name="type"], input[name="grade"]').forEach((input)
 });
 
 updateFlow();
+
+async function loadPublicSettings() {
+  try {
+    const response = await fetch("https://student-hub.kareemahmedhussein4.workers.dev/api/site-settings", { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok || !data.ok) return;
+    publicSettings = data;
+    const cards = document.querySelectorAll(".price-card");
+    const prices = document.querySelectorAll(".price-card strong");
+    if (prices[0]) prices[0].textContent = data.prices["JavaScript (QUREO)"] + " جنيه";
+    if (prices[1]) prices[1].textContent = data.prices.JavaScript + " جنيه";
+    if (prices[2]) prices[2].textContent = data.prices.bundle + " جنيه";
+    if (cards[2]) {
+      cards[2].hidden = !data.offer.enabled;
+      if (data.offer.enabled) {
+        cards[2].querySelector("span").textContent = data.offer.title;
+        cards[2].querySelector("small").textContent = data.offer.description;
+      }
+    }
+    const banner = document.querySelector("#site-announcement");
+    if (banner && (data.maintenance.enabled || data.announcement.enabled)) {
+      banner.hidden = false;
+      banner.textContent = data.maintenance.enabled ? data.maintenance.message : data.announcement.message;
+      banner.classList.toggle("warning", data.maintenance.enabled || data.announcement.type === "warning");
+    }
+    if (data.maintenance.enabled) {
+      document.querySelectorAll(".submit-button").forEach(button => {
+        button.disabled = true;
+        const label = button.querySelector("span");
+        if (label) label.textContent = "الموقع تحت الصيانة";
+      });
+    }
+  } catch {}
+}
+loadPublicSettings();
 
 const submitButton = form.querySelector(".submit-button");
 let pendingOrder = null;
@@ -203,21 +238,14 @@ function updatePaymentPrice(order) {
   priceBox.replaceChildren();
   planBox.replaceChildren();
 
-  const prices = {
-    "JavaScript (QUREO)": 35,
-    "JavaScript": 40,
-    "Python": 40,
-    "ثقافة مالية": 40,
-    "Financial Literacy": 40
-  };
-  const price = prices[order.subject];
+  const price = publicSettings.prices[order.subject];
   const isSecondYear = order.grade === "تانية بكالوريا";
 
   if (isSecondYear) {
     planBox.hidden = false;
     const plans = [
       { value: "single", title: "المادة المختارة فقط", detail: (order.subject || "المادة") + " — " + price + " جنيه" },
-      { value: "bundle", title: "باقة المواد الثلاثة", detail: "Python + JavaScript + " + (order.type === "لغات" ? "Financial Literacy" : "ثقافة مالية") + " — 100 جنيه بدلًا من 120" }
+      ...(publicSettings.offer.enabled ? [{ value: "bundle", title: publicSettings.offer.title, detail: "Python + JavaScript + " + (order.type === "لغات" ? "Financial Literacy" : "ثقافة مالية") + " — " + publicSettings.prices.bundle + " جنيه بدلًا من " + publicSettings.prices.bundleOriginal }] : [])
     ];
 
     plans.forEach((plan) => {
@@ -253,14 +281,14 @@ function updatePaymentPrice(order) {
   const selected = document.createElement("div");
   selected.className = "payment-price-line";
   selected.textContent = order.bundle
-    ? "باقة المواد الثلاثة — 100 جنيه"
+    ? publicSettings.offer.title + " — " + publicSettings.prices.bundle + " جنيه"
     : order.subject + " — " + (price ?? "غير محدد") + " جنيه";
   priceBox.append(title, selected);
 
   if (order.bundle) {
     const saving = document.createElement("div");
     saving.className = "payment-price-saving";
-    saving.textContent = "وفّرت 20 جنيه — السعر الأصلي 120 جنيه";
+    saving.textContent = "وفّرت " + (publicSettings.prices.bundleOriginal - publicSettings.prices.bundle) + " جنيه — السعر الأصلي " + publicSettings.prices.bundleOriginal + " جنيه";
     priceBox.appendChild(saving);
   }
 }
