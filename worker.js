@@ -95,7 +95,7 @@ function withCors(response, request) {
   headers.set("Vary", "Origin");
   if (request.headers.get("Origin") === ALLOWED_ORIGIN) {
     headers.set("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
-    headers.set("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS");
+    headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, OPTIONS");
     headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     headers.set("Access-Control-Max-Age", "86400");
   }
