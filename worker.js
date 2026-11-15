@@ -547,6 +547,16 @@ async function handleApi(request, env) {
   return json({ ok: false, message: "المسار غير موجود." }, 404);
 }
 
+const ADMIN_ASSET_PATHS = new Set([
+  "/admin",
+  "/admin.html",
+  "/admin.css",
+  "/admin.js",
+  "/admin-experience.css",
+  "/admin-experience.js",
+  "/maintenance.html"
+]);
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -557,6 +567,25 @@ export default {
       return withCors(await handleApi(request, env), request);
     }
     if (url.pathname === "/health") return handleApi(request, env);
+
+    // Keep the admin panel reachable while the public-facing pages are closed.
+    const isAdminAsset = ADMIN_ASSET_PATHS.has(url.pathname);
+    const isPageRequest = request.method === "GET" &&
+      (request.headers.get("accept") || "").includes("text/html");
+
+    if (!isAdminAsset && isPageRequest && requireStorage(env)) {
+      try {
+        const settings = await readSiteSettings(env);
+        if (settings.maintenance.enabled) {
+          const destination = new URL("/maintenance.html", url.origin);
+          destination.searchParams.set("message", settings.maintenance.message);
+          return Response.redirect(destination.toString(), 302);
+        }
+      } catch (error) {
+        console.error("Maintenance mode check failed:", error.message);
+      }
+    }
+
     return env.ASSETS.fetch(request);
   }
 };
