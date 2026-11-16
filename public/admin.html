@@ -63,6 +63,17 @@
         <p id="dashboard-message" class="message" role="status"></p>
         <div id="orders" class="orders-list"></div>
       </section>
+      <section class="card settings-card" id="coupons-card">
+        <div class="orders-heading"><div><div class="eyebrow">DISCOUNT COUPONS</div><h2>إدارة كوبونات الخصم</h2></div><span class="muted">تُطبق على أسعار المواد العادية فقط</span></div>
+        <form id="coupon-form"><div class="settings-grid">
+          <label>كود الكوبون<input name="code" maxlength="30" placeholder="STUDENT20" pattern="[A-Za-z0-9_-]{3,30}" required></label>
+          <label>نوع الخصم<select name="discount-type"><option value="percent">نسبة مئوية (%)</option><option value="fixed">مبلغ ثابت (جنيه)</option></select></label>
+          <label>قيمة الخصم<input name="discount-value" type="number" min="1" max="100" required></label>
+          <label>عدد مرات الاستخدام (اتركه فارغًا بلا حد)<input name="max-uses" type="number" min="1" max="1000000"></label>
+          <label>تاريخ الانتهاء (اختياري)<input name="expires-at" type="date"></label>
+        </div><div class="settings-actions"><button class="primary" type="submit">إنشاء الكوبون</button><span id="coupon-form-message" class="message" role="status"></span></div></form>
+        <div id="coupons-list" class="coupons-list"></div>
+      </section>
       <section class="card settings-card" id="site-settings-card">
         <div class="orders-heading"><div><div class="eyebrow">SITE CONTROL</div><h2>إعدادات الموقع</h2></div><span class="muted">تحكم مباشر في تجربة الطلاب</span></div>
         <form id="site-settings-form">
