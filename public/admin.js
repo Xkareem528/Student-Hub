@@ -55,6 +55,8 @@ function renderOrder(order) {
     ["رقم الهاتف", order.phone],
     ["كود الطالب", order.student_code],
     ["المبلغ", order.amount + " جنيه"],
+    ["كوبون الخصم", order.coupon_code || "—"],
+    ["قيمة الخصم", (order.discount_amount || 0) + " جنيه"],
     ["وسيلة الدفع", order.payment_method],
     ["رقم المحوّل", order.sender_phone],
     ["إشعار Telegram", order.telegram_status === "sent" ? "تم الإرسال" : order.telegram_status === "failed" ? "تعذر الإرسال" : "قيد الإرسال"]
@@ -190,9 +192,32 @@ $("#site-settings-form").addEventListener("submit", async event => {
   }
 });
 
+function renderCoupon(coupon) {
+  const card = make("article", "coupon-item"), info = make("div", "coupon-info");
+  info.append(make("strong", "", coupon.code), make("small", "", (coupon.discount_type === "percent" ? coupon.discount_value + "% خصم" : coupon.discount_value + " جنيه خصم") + " · الاستخدامات: " + coupon.used_count + (coupon.max_uses ? " / " + coupon.max_uses : " / غير محدود") + (coupon.expires_at ? " · ينتهي " + coupon.expires_at : "")), make("span", "coupon-state", coupon.active ? "مفعّل" : "متوقف"));
+  const toggle = make("button", "ghost", coupon.active ? "إيقاف" : "تفعيل"); toggle.type = "button";
+  toggle.addEventListener("click", async () => { toggle.disabled = true; try { await api("/api/admin/coupons/" + encodeURIComponent(coupon.id), { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ active: !coupon.active }) }); await loadCoupons(); } catch (error) { showMessage($("#coupon-form-message"), error.message, true); toggle.disabled = false; } });
+  card.append(info, toggle); return card;
+}
+async function loadCoupons() {
+  const data = await api("/api/admin/coupons"), list = $("#coupons-list"); list.replaceChildren();
+  if (!data.coupons?.length) { list.append(make("p", "empty", "لا توجد كوبونات حتى الآن.")); return; }
+  data.coupons.forEach(coupon => list.append(renderCoupon(coupon)));
+}
+$("#coupon-form").addEventListener("submit", async event => {
+  event.preventDefault(); const form = event.currentTarget, button = form.querySelector('button[type="submit"]'), value = name => form.elements[name].value;
+  button.disabled = true; showMessage($("#coupon-form-message"), "جاري إنشاء الكوبون...");
+  try {
+    await api("/api/admin/coupons", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: value("code").trim().toUpperCase(), discountType: value("discount-type"), discountValue: Number(value("discount-value")), maxUses: value("max-uses"), expiresAt: value("expires-at") }) });
+    form.reset(); showMessage($("#coupon-form-message"), "تم إنشاء الكوبون بنجاح."); await loadCoupons();
+  } catch (error) { showMessage($("#coupon-form-message"), error.message, true); } finally { button.disabled = false; }
+});
+$("#coupon-form").elements["discount-type"].addEventListener("change", event => { $("#coupon-form").elements["discount-value"].max = event.target.value === "percent" ? "100" : "100000"; });
+
 async function refresh() {
   try {
     await loadOrders();
+    await loadCoupons();
     showMessage($("#dashboard-message"), "تم تحديث البيانات.");
   } catch (error) {
     showMessage($("#dashboard-message"), error.message, true);
@@ -219,6 +244,7 @@ $("#login-form").addEventListener("submit", async (event) => {
     $("#logout").hidden = false;
     await loadOrders();
     await loadSettings();
+    await loadCoupons();
   } catch (error) {
     showMessage($("#login-message"), error.message, true);
   } finally {
