@@ -273,10 +273,47 @@ async function handleAdmin(request, env) {
     return json({ ok: true, settings }, 200, { "cache-control": "no-store" });
   }
 
+  if (path === "/api/admin/coupons" && request.method === "GET") {
+    const rows = await env.DB.prepare("SELECT id, code, discount_type, discount_value, max_uses, used_count, expires_at, active, created_at FROM coupons ORDER BY created_at DESC").all();
+    return json({ ok: true, coupons: rows.results || [] });
+  }
+  if (path === "/api/admin/coupons" && request.method === "POST") {
+    let body;
+    try { body = await request.json(); } catch { return json({ ok: false, message: "بيانات الكوبون غير صالحة." }, 400); }
+    const code = typeof body.code === "string" ? body.code.trim().toUpperCase() : "";
+    const type = body.discountType;
+    const value = Number(body.discountValue);
+    const maxUses = body.maxUses === "" || body.maxUses == null ? null : Number(body.maxUses);
+    const expiresAt = typeof body.expiresAt === "string" && body.expiresAt ? body.expiresAt : null;
+    if (!/^[A-Z0-9_-]{3,30}$/.test(code) || !["percent", "fixed"].includes(type) ||
+        !Number.isInteger(value) || value < 1 || value > (type === "percent" ? 100 : 100000) ||
+        (maxUses !== null && (!Number.isInteger(maxUses) || maxUses < 1 || maxUses > 1000000)) ||
+        (expiresAt !== null && !/^\d{4}-\d{2}-\d{2}$/.test(expiresAt))) {
+      return json({ ok: false, message: "راجع الكود ونوع الخصم وقيمته وحد الاستخدام وتاريخ الانتهاء." }, 400);
+    }
+    try {
+      await env.DB.prepare("INSERT INTO coupons (id, code, discount_type, discount_value, max_uses, expires_at, active) VALUES (?, ?, ?, ?, ?, ?, 1)")
+        .bind(crypto.randomUUID(), code, type, value, maxUses, expiresAt).run();
+    } catch (error) {
+      if (/unique|constraint/i.test(error.message || "")) return json({ ok: false, message: "كود الخصم موجود بالفعل." }, 409);
+      throw error;
+    }
+    return json({ ok: true, message: "تم إنشاء الكوبون." });
+  }
+  const couponToggle = path.match(/^\/api\/admin\/coupons\/([a-f0-9-]+)$/i);
+  if (couponToggle && request.method === "PATCH") {
+    let body;
+    try { body = await request.json(); } catch { return json({ ok: false, message: "بيانات غير صالحة." }, 400); }
+    if (typeof body.active !== "boolean") return json({ ok: false, message: "حالة الكوبون غير صحيحة." }, 400);
+    const result = await env.DB.prepare("UPDATE coupons SET active = ? WHERE id = ?").bind(body.active ? 1 : 0, couponToggle[1]).run();
+    if (!result.meta?.changes) return json({ ok: false, message: "الكوبون غير موجود." }, 404);
+    return json({ ok: true });
+  }
+
   if (path === "/api/admin/orders" && request.method === "GET") {
     const status = url.searchParams.get("status") || "";
     const query = (url.searchParams.get("q") || "").trim().slice(0, 80);
-    let sql = "SELECT id, created_at, updated_at, type, grade, subject, bundle, amount, phone, student_code, payment_method, sender_phone, status, telegram_status FROM orders";
+    let sql = "SELECT id, created_at, updated_at, type, grade, subject, bundle, amount, phone, student_code, payment_method, sender_phone, coupon_code, discount_amount, status, telegram_status FROM orders";
     const clauses = [];
     const values = [];
     if (status && STATUS_LABELS[status]) {
@@ -338,6 +375,31 @@ function normalizeEgyptPhone(value) {
   else if (phone.startsWith("0020")) phone = "0" + phone.slice(4);
   else if (phone.startsWith("20") && phone.length === 12) phone = "0" + phone.slice(2);
   return /^01\d{9}$/.test(phone) ? phone : "";
+}
+
+async function calculateCoupon(env, codeInput, subject, grade, bundle, settings) {
+  const code = typeof codeInput === "string" ? codeInput.trim().toUpperCase() : "";
+  if (!code) return { ok: true, code: "", discount: 0, amount: bundle ? settings.prices.bundle : settings.prices[subject] };
+  if (bundle) return { ok: false, message: "الكوبونات متاحة على سعر المادة العادي فقط، ولا تنطبق على الباقات." };
+  const allowed = grade === "أولى بكالوريا" ? ["JavaScript (QUREO)"] : ["Python", "JavaScript", "ثقافة مالية", "Financial Literacy"];
+  if (!allowed.includes(subject)) return { ok: false, message: "اختيار المادة غير صالح." };
+  const coupon = await env.DB.prepare("SELECT code, discount_type, discount_value, max_uses, used_count, expires_at, active FROM coupons WHERE code = ? COLLATE NOCASE").bind(code).first();
+  if (!coupon || !coupon.active) return { ok: false, message: "كود الخصم غير صحيح أو غير مفعّل." };
+  if (coupon.expires_at && coupon.expires_at < new Date().toISOString().slice(0, 10)) return { ok: false, message: "انتهت صلاحية كود الخصم." };
+  if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) return { ok: false, message: "تم الوصول للحد الأقصى لاستخدام هذا الكوبون." };
+  const base = settings.prices[subject];
+  const discount = coupon.discount_type === "percent" ? Math.floor(base * coupon.discount_value / 100) : Math.min(base, coupon.discount_value);
+  return { ok: true, code: coupon.code, discount, amount: Math.max(0, base - discount) };
+}
+
+async function handleCouponValidation(request, env) {
+  if (request.method !== "POST") return json({ ok: false, message: "طريقة الطلب غير مدعومة." }, 405);
+  if (!requireStorage(env)) return json({ ok: false, message: "خدمة الكوبونات غير متاحة حاليًا." }, 503);
+  let body;
+  try { body = await request.json(); } catch { return json({ ok: false, message: "أدخل كود الخصم." }, 400); }
+  const settings = await readSiteSettings(env);
+  const result = await calculateCoupon(env, body.code, body.subject, body.grade, Boolean(body.bundle), settings);
+  return json(result, result.ok ? 200 : 400, { "cache-control": "no-store" });
 }
 
 async function handleTrack(request, env) {
@@ -453,7 +515,16 @@ async function handleSubmit(request, env) {
     return json({ ok: false, message: "ارفع صورة إيصال صحيحة لا تتجاوز 5 ميجابايت." }, 400);
   }
 
-  const amount = bundle ? siteSettings.prices.bundle : siteSettings.prices[subject];
+  const couponCodeInput = data.get("couponCode") || "";
+  const couponResult = await calculateCoupon(env, couponCodeInput, subject, grade, bundle, siteSettings);
+  if (!couponResult.ok) return json({ ok: false, message: couponResult.message }, 400);
+  const amount = couponResult.amount;
+  const couponCode = couponResult.code;
+  const discountAmount = couponResult.discount;
+  if (couponCode) {
+    const used = await env.DB.prepare("UPDATE coupons SET used_count = used_count + 1 WHERE code = ? COLLATE NOCASE AND active = 1 AND (expires_at IS NULL OR expires_at >= date('now')) AND (max_uses IS NULL OR used_count < max_uses)").bind(couponCode).run();
+    if (!used.meta?.changes) return json({ ok: false, message: "انتهى الكوبون أو تم استنفاد مرات استخدامه. جرّب كودًا آخر." }, 409);
+  }
   const orderDescription = bundle
     ? "باقة المواد الثلاثة: Python + JavaScript + " + (type === "لغات" ? "Financial Literacy" : "ثقافة مالية")
     : subject;
@@ -466,6 +537,8 @@ async function handleSubmit(request, env) {
     "الصف: " + grade,
     "الطلب: " + orderDescription,
     "المادة المختارة: " + subject,
+    "المبلغ قبل الخصم: " + (amount + discountAmount) + " جنيه",
+    ...(couponCode ? ["كوبون الخصم: " + couponCode, "قيمة الخصم: " + discountAmount + " جنيه"] : []),
     "المبلغ المطلوب: " + amount + " جنيه",
     "رقم الطالب: " + phone,
     "كود الطالب: " + studentCode,
@@ -477,13 +550,14 @@ async function handleSubmit(request, env) {
 
   try {
     await env.DB.prepare(
-      "INSERT INTO orders (id, type, grade, subject, bundle, amount, phone, student_code, payment_method, sender_phone, receipt_type, receipt_size, status, telegram_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending')"
+      "INSERT INTO orders (id, type, grade, subject, bundle, amount, phone, student_code, payment_method, sender_phone, receipt_type, receipt_size, coupon_code, discount_amount, status, telegram_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending')"
     ).bind(
       id, type, grade, subject, bundle ? 1 : 0, amount, phone, studentCode,
-      paymentMethod, senderPhone, receipt.type, receipt.size
+      paymentMethod, senderPhone, receipt.type, receipt.size, couponCode || null, discountAmount
     ).run();
   } catch (error) {
     console.error("Order storage error:", error.message);
+    if (couponCode) await env.DB.prepare("UPDATE coupons SET used_count = MAX(0, used_count - 1) WHERE code = ? COLLATE NOCASE").bind(couponCode).run().catch(() => {});
     return json({ ok: false, message: "تعذر حفظ الطلب حاليًا. حاول مرة أخرى لاحقًا." }, 503);
   }
 
@@ -529,6 +603,8 @@ async function handleApi(request, env) {
       announcement: settings.announcement
     }, 200, { "cache-control": "no-store" });
   }
+
+  if (url.pathname === "/api/coupons/validate") return handleCouponValidation(request, env);
 
   if (url.pathname === "/api/payment-info" && request.method === "GET") {
     return json({
