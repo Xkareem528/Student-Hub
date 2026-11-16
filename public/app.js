@@ -146,6 +146,7 @@ function createPaymentStep() {
     </div>
     <div id="payment-price" class="payment-price" aria-live="polite"></div>
     <div id="payment-plan" class="payment-plan" aria-label="اختيار الباقة" hidden></div>
+    <div id="coupon-box" class="coupon-box"><label class="field"><span>كود الخصم (اختياري)</span><input id="coupon-code" type="text" maxlength="30" placeholder="مثال: STUDENT20" autocomplete="off"></label><button id="coupon-apply" class="coupon-apply" type="button">تطبيق الكوبون</button><p id="coupon-message" class="coupon-message" role="status" aria-live="polite"></p></div>
     <div class="payment-methods" role="group" aria-label="وسيلة الدفع">
       <label class="payment-method"><input type="radio" name="payment-method" value="InstaPay"><span>InstaPay</span></label>
       <label class="payment-method"><input type="radio" name="payment-method" value="Vodafone Cash"><span>Vodafone Cash</span></label>
@@ -229,6 +230,20 @@ function createPaymentStep() {
   });
 
   step.querySelector("#payment-confirm").addEventListener("click", submitPaidOrder);
+  step.querySelector("#coupon-apply").addEventListener("click", async () => {
+    const codeInput = step.querySelector("#coupon-code"), message = step.querySelector("#coupon-message"), button = step.querySelector("#coupon-apply");
+    const code = codeInput.value.trim().toUpperCase();
+    if (!code) { message.textContent = "اكتب كود الخصم أولاً."; message.className = "coupon-message error"; return; }
+    if (!pendingOrder || pendingOrder.bundle) { message.textContent = "الكوبونات متاحة على السعر العادي فقط."; message.className = "coupon-message error"; return; }
+    button.disabled = true; message.textContent = "جاري التحقق من الكوبون..."; message.className = "coupon-message";
+    try {
+      const response = await fetch("https://student-hub.kareemahmedhussein4.workers.dev/api/coupons/validate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, subject: pendingOrder.subject, grade: pendingOrder.grade, bundle: false }) });
+      const data = await response.json(); if (!response.ok || !data.ok) throw new Error(data.message || "الكوبون غير صالح.");
+      pendingOrder.couponCode = data.code; pendingOrder.discountAmount = data.discount; updatePaymentPrice(pendingOrder);
+      message.textContent = "تم تطبيق الكوبون بنجاح! وفّرت " + data.discount + " جنيه."; message.className = "coupon-message success";
+    } catch (error) { pendingOrder.couponCode = ""; pendingOrder.discountAmount = 0; updatePaymentPrice(pendingOrder); message.textContent = error.message; message.className = "coupon-message error"; }
+    finally { button.disabled = false; }
+  });
   return step;
 }
 
@@ -236,6 +251,8 @@ function updatePaymentPrice(order) {
   const step = createPaymentStep();
   const priceBox = step.querySelector("#payment-price");
   const planBox = step.querySelector("#payment-plan");
+  const couponBox = step.querySelector("#coupon-box");
+  const couponMessage = step.querySelector("#coupon-message");
   priceBox.replaceChildren();
   planBox.replaceChildren();
 
@@ -268,6 +285,11 @@ function updatePaymentPrice(order) {
       planBox.appendChild(label);
       radio.addEventListener("change", () => {
         order.bundle = radio.value === "bundle";
+        order.couponCode = "";
+        order.discountAmount = 0;
+        step.querySelector("#coupon-code").value = "";
+        couponMessage.textContent = order.bundle ? "الكوبونات لا تسري على سعر الباقة المخفّض." : "";
+        couponMessage.classList.remove("success", "error");
         updatePaymentPrice(order);
       });
     });
@@ -276,6 +298,8 @@ function updatePaymentPrice(order) {
     order.bundle = false;
   }
 
+  couponBox.hidden = Boolean(order.bundle);
+  if (order.bundle) { order.couponCode = ""; order.discountAmount = 0; }
   const title = document.createElement("div");
   title.className = "payment-price-title";
   title.textContent = "ملخص السعر";
@@ -285,6 +309,11 @@ function updatePaymentPrice(order) {
     ? publicSettings.offer.title + " — " + publicSettings.prices.bundle + " جنيه"
     : order.subject + " — " + (price ?? "غير محدد") + " جنيه";
   priceBox.append(title, selected);
+  if (!order.bundle && order.discountAmount > 0) {
+    const discount = document.createElement("div"); discount.className = "payment-price-saving"; discount.textContent = "خصم " + order.discountAmount + " جنيه بكود " + order.couponCode;
+    const finalPrice = document.createElement("strong"); finalPrice.className = "payment-price-final"; finalPrice.textContent = "الإجمالي بعد الخصم: " + (price - order.discountAmount) + " جنيه";
+    priceBox.append(discount, finalPrice);
+  }
 
   if (order.bundle) {
     const saving = document.createElement("div");
@@ -335,6 +364,7 @@ async function submitPaidOrder() {
     payload.append("grade", pendingOrder.grade);
     payload.append("subject", pendingOrder.subject);
     payload.append("bundle", String(Boolean(pendingOrder.bundle)));
+    payload.append("couponCode", pendingOrder.bundle ? "" : (pendingOrder.couponCode || ""));
     payload.append("phone", pendingOrder.phone);
     payload.append("studentCode", pendingOrder.studentCode);
     payload.append("password", pendingOrder.password);
@@ -404,7 +434,7 @@ async function handleSubmission(event) {
     return;
   }
 
-  pendingOrder = { type, grade, subject, phone, studentCode, password, consent };
+  pendingOrder = { type, grade, subject, phone, studentCode, password, consent, bundle: false, couponCode: "", discountAmount: 0 };
   submitButton.disabled = true;
   submitButton.querySelector("span").textContent = "جاري تجهيز الدفع...";
 
