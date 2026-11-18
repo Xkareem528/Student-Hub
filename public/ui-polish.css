@@ -115,3 +115,20 @@ legend{font-size:14px;margin-bottom:13px}
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+/* Admin dashboard visual refinement */
+.wrap{width:min(1220px,calc(100% - 40px))}
+.top{position:relative;min-height:84px}
+.top:after{content:"";position:absolute;bottom:-1px;right:0;width:30%;height:1px;background:linear-gradient(90deg,transparent,#38b4ff,transparent)}
+.login-card{border-radius:24px;box-shadow:0 28px 85px #0006,inset 0 1px #ffffff10}
+.login-card input{min-height:50px}
+.stats{gap:14px}
+.stat{border-radius:20px}
+.orders-card,.settings-card{border-radius:22px;box-shadow:0 22px 65px #0004,inset 0 1px #ffffff0a}
+.filters input,.filters select{min-height:48px}
+.order{border-radius:17px}
+.order-actions button,.order-actions select,.ghost,.primary{min-height:43px;border-radius:12px;transition:transform .2s,filter .2s,border-color .2s}
+.primary:hover,.ghost:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.settings-card input,.settings-card select,.settings-card textarea{min-height:46px}
+.coupon-item{border-radius:15px}
+@media(max-width:700px){.wrap{width:min(100% - 24px,1220px)}.top{padding-block:10px}.orders-card,.settings-card{border-radius:17px}}
